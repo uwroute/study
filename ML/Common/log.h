@@ -14,6 +14,7 @@
 
 #include <cstdio>
 #include <cstdlib>
+#include <stdint.h>
 
 enum LOG_LEVEL
 {
