@@ -1,5 +1,22 @@
+/*=============================================================================
+#
+# Author: route - uwnroute@126.com
+#
+# Last modified: 2015-03-21 10:07
+#
+# Filename: logistic_model.h
+#
+# Description: 
+#
+=============================================================================*/
+#ifndef _LOGISTIC_MODEL_H_
+#define _LOGISTIC_MODEL_H_
+
 #include "Model.h"
 #include "data/data.h"
+
+namespace ML
+{
 
 class LogisticModel : public Model
 {
@@ -23,4 +40,7 @@ private:
 private:
     // model param
     vector<double> _w;
+};
+
 }
+#endif

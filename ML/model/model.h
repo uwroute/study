@@ -1,7 +1,24 @@
+/*=============================================================================
+#
+# Author: route - uwnroute@126.com
+#
+# Last modified: 2015-03-21 10:07
+#
+# Filename: model.h
+#
+# Description: 
+#
+=============================================================================*/
+#ifndef _MODEL_H_
+#define _MODEL_H_
+
 #include <vector>
 #include <string>
 #include <iostream>
 #include "data/data.h"
+
+
+namespace ML {
 
 using std::vector;
 
@@ -23,3 +40,7 @@ public:
     virtual void loss(const vector<double>& w, const DataSet& data, double& loss) = 0;
     virtual void grad_and_loss(const vector<double>& w, const DataSet& data, vector<double>& grad, double& loss) = 0;
 };
+
+}
+
+#endif
