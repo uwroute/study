@@ -56,14 +56,6 @@ void OWLQN::dir()
                 }
             }
         }
-        // check dir direction, same direction with -grad
-        for (int i=0; i<_N; ++i)
-        {
-            if (_dir[i]*_grad[i] > 0.0)
-            {
-                _dir[i] = 0.0;
-            }
-        }
     }
     else
     {
@@ -107,11 +99,21 @@ void OWLQN::dir()
         }
         i = (i+1)%M;
     }
+    // fix dir sign
+    // check dir direction, same direction with l1 grad
+    for (int i=0; i<_N; ++i)
+    {
+        if (_dir[i]*_grad[i] > 0.0)
+        {
+            _dir[i] = 0.0;
+        }
+    }
 }
 
 void OWLQN::linearSearch()
 {
-    // check is _dir down dir
+    // check is _dir down dir, so Hk+1 should be positive
+    // l1grad * _dir should be less than 0
     double res = 0.0;
 }
 
