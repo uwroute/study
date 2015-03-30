@@ -1,5 +1,6 @@
 #include "logistic_model.h"
 
+namespace ML {
 
 double LogisticModel::wx(const Feature* sample, const vector<double>& w)
 {
@@ -44,19 +45,82 @@ double LogisticModel::log_loss(const Feature* sample, const vector<double>& w, d
 }
 void LogisticModel::grad(const vector<double>& w, DataSet& data, vector<double>& grad);
 {
-
+    for (size_t i=0; i<data.sample_num; ++i)
+    {
+        Feature* sample = &(data.samples[data.sample_idx[i]]);
+        double h = predict(sample, w);
+        double y = data.labels[data.sample_idx[i]];
+        if (y < 0.5)
+        {
+            y = 0.0;
+        }
+        double g = h - y;
+        while (sample->index != -1)
+        {
+            grad[sample->index] += g*sample->value;
+            sample++;
+        }
+    }
 }
 void LogisticModel::loss(const vector<double>& w, DataSet& data, double& loss);
 {
-
+    loss = 0.0;
+    for (size_t i=0; i<data.sample_num; ++i)
+    {
+        loss += log_loss(&(data.samples[0]) + data.sample_idx[i], data.labels[i]);
+    }    
 }
 void LogisticModel::grad_and_loss(const vector<double>& w, DataSet& data, vector<double>& grad, double& loss);
-{}
+{
+    loss = 0.0;
+    for (size_t i=0; i<data.sample_num; ++i)
+    {
+        loss += log_loss(&(data.samples[0]) + data.sample_idx[i], data.labels[i]);
+        for (size_t i=0; i<data.sample_num; ++i)
+        {
+            Feature* sample = &(data.samples[data.sample_idx[i]]);
+            double h = predict(sample, w);
+            double y = data.labels[data.sample_idx[i]];
+            if (y < 0.5)
+            {
+                y = 0.0;
+            }
+            double g = h - y;
+            while (sample->index != -1)
+            {
+                grad[sample->index] += g*sample->value;
+                sample++;
+            }
+        }
+    }
+}
+
 double LogisticModel::predict(const Feature* sample)
 {
     return predict(sample, _w);
 }
+
 void LogisticModel::save_model(const char* model_file)
-{}
+{
+    ofstream ofile(model_file);
+    for (int i=0; i<_w.size(); ++i)
+    {
+        ofile << _w[i] << std::endl;
+    }
+    ofile.close();
+}
+
 void LogisticModel::load_model(const char* model_file)
-{}
+{
+    ifstream infile(model_file);
+    std::string line;
+    getline(infile, line);
+    while (!infile.eof)
+    {
+        _w.push_back(atof(line.c_str()));
+        getline(infile, line);
+    }
+    infile.close();
+}
+
+}
