@@ -69,7 +69,7 @@ int load_data(const std::string& file, DataSet& data)
     ifstream infile(file.c_str());
     if (!infile)
     {
-        LOG_ERROR("Open data file : %s failed when compute space !\n", file.c_str());
+        LOG_ERROR("Open data file : %s failed when compute space !", file.c_str());
         return -1;
     }
     std::string line;
@@ -90,9 +90,9 @@ int load_data(const std::string& file, DataSet& data)
         }
         getline(infile, line);
     }
-    LOG_INFO("Compute Space : Sample Fea Num = %d\n", data.sample_fea_num);
-    LOG_INFO("Compute Space : Sample Num = %d\n", data.sample_num);
-    LOG_INFO("Compute Space : Max Fea Num = %d\n", data.max_fea_num);
+    LOG_INFO("Compute Space : Sample Fea Num = %d", data.sample_fea_num);
+    LOG_INFO("Compute Space : Sample Num = %d", data.sample_num);
+    LOG_INFO("Compute Space : Max Fea Num = %d", data.max_fea_num);
     infile.close();
     // load data
     data.samples.reserve(data.sample_fea_num);
@@ -101,7 +101,7 @@ int load_data(const std::string& file, DataSet& data)
     infile.open(file.c_str());
     if (!infile)
     {
-        LOG_ERROR("Load data file : %s failed!\n", file.c_str());
+        LOG_ERROR("Load data file : %s failed!", file.c_str());
         return -1;
     }
     getline(infile, line);
@@ -122,9 +122,9 @@ int load_data(const std::string& file, DataSet& data)
         }
         getline(infile, line);
     }
-    LOG_INFO("Load Data : Sample Fea Num = %d\n", data.samples.size());
-    LOG_INFO("Load Data : Sample Num = %d\n", data.labels.size());
-    LOG_INFO("Load Data : Max Fea Num = %d\n", data.max_fea_num);
+    LOG_INFO("Load Data : Sample Fea Num = %lu", data.samples.size());
+    LOG_INFO("Load Data : Sample Num = %lu", data.labels.size());
+    LOG_INFO("Load Data : Max Fea Num = %d", data.max_fea_num);
     infile.close();
     return 0;
 }
