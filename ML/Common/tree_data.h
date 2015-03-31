@@ -28,8 +28,8 @@ struct TreeFeature
 struct TreeDataSet
 {
 	TreeFeature* samples; // samples : {1,0.5},{2,1.0},{-1,0.0},{2,1.0}
-	uint32_t* index;  // samples index : 0, 3
-	uint32_t* label;  // samples label : 1, 0
+	int* index;  // samples index : 0, 3
+	int* label;  // samples label : 1, 0
 	int* feas;
 };
 

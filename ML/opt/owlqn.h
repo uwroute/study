@@ -15,11 +15,21 @@ public:
 public:
     void optimize();
 private:
-    void grad();
-    void dir();
+    void makeSteepestDescDir(); // -grad dir
+	void mapDirByInverseHessian(); // -Hk+1*grad
+	void fixDirSign();  // -Hk+1*grad should be same dir with -grad
+	void updateDir();	// compute _dir
+	double checkDir();  // _dir should be desc dir
     void linearSearch();
-    void shift();
-    double dot(vector<double>& x, vector<double>& y);
+    void shiftState();
+	double l1Loss();
+private:
+    double dotProduct(vector<double>& x, vector<double>& y);
+	void add(vector<double>& out, const vector<double>& in);
+	void addScale(vector<double>& out, const vector<double>& x, const double scale);
+	void addScaleInto(vector<double>& out, const vector<double>& x, const vector<double>& y, const double scale);
+	void scale(vector<double>& out, const double scale);
+	void scaleInto(vector<double>& out, const vector<double>& x, const double scale);
 private:
     // current param
     int _N;
