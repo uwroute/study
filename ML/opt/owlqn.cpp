@@ -79,6 +79,7 @@ void OWLQN::optimize()
         linearSearch();
         shiftState();
     }
+    _model->save_param(_w);
 }
 
 void OWLQN::updateDir()
@@ -129,6 +130,10 @@ void OWLQN::makeSteepestDescDir()
             _dir[i] = -1.0*_grad[i];
         }
     }
+    for (size_t i=0; i<_N; ++i)
+    {
+        _steepest_dir[i] = _dir[i];
+    }
 }
 
 void OWLQN::mapDirByInverseHessian()
@@ -169,33 +174,7 @@ void OWLQN::fixDirSign()
 	{	
 		for (size_t i=0; i<_N; ++i)
 		{
-			double steepest_dir = 0.0;
-			if (_w[i] > MinDoubleValue)
-            {
-                steepest_dir = -1.0*(_grad[i] + _l1);
-            }
-            else if (_w[i] < -1.0*MinDoubleValue)
-            {
-                steepest_dir = -1.0*(_grad[i] - _l1);
-            }
-            else
-            {
-                double l_grad = _grad[i]-_l1;
-                double r_grad = _grad[i]+_l1;
-                if (r_grad < -1.0*MinDoubleValue)
-                {
-                    steepest_dir = -r_grad;
-                }
-                else if (l_grad > MinDoubleValue)
-                {
-                    steepest_dir = -l_grad;
-                }
-                else
-                {
-                    steepest_dir = 0.0;
-                }
-            }
-			if (_dir[i]*steepest_dir <= 0)
+			if (_dir[i]*_steepest_dir[i] <= 0)
 			{
 				_dir[i] = 0.0;
 			}
@@ -214,7 +193,7 @@ double OWLQN::checkDir()
 	{	
 		for (size_t i=0; i<_N; ++i)
 		{
-			double l1_grad = 0.0;
+/*			double l1_grad = 0.0;
 			if (_w[i] > MinDoubleValue)
             {
                 l1_grad = _grad[i] + _l1;
@@ -240,7 +219,8 @@ double OWLQN::checkDir()
                     l1_grad = 0.0;
                 }
             }
-			value += _dir[i]*l1_grad;
+// */
+			value += -1.0*_dir[i]*_steepest_dir[i];
 		}
 	}
 	return value;
@@ -311,6 +291,7 @@ void OWLQN::shiftState()
     {
         _S[_end][k] = _next_w[k] - _w[k];
         _Y[_end][k] = _next_grad[k] - _grad[k];
+        _w[k] = _next_w[k];
     }
     _end = (_end+1) % _M;
     if (_cur_iter > _M)

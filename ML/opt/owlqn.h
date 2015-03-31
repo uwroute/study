@@ -23,8 +23,6 @@ namespace ML
 
 using std::vector;
 
-const double MinDoubleValue = 1.0e10;
-
 class OWLQN
 {
 public:
@@ -59,6 +57,7 @@ private:
     vector<double> _dir;
     vector<double> _grad;
     vector<double> _next_grad;
+    vector<double>& _steepest_dir;
     double _loss;
     // S,Y in LBFGS
     vector<double> _alpha;

@@ -33,13 +33,21 @@ public:
     void grad(const vector<double>& w, DataSet& data, vector<double>& grad);
     void loss(const vector<double>& w, Dataset& data, double& loss);
     void grad_and_loss(const vector<double>& w, DataSet& data, vector<double>& grad, double& loss);
-    void set_param(const vector<double>& w);
+    void set_param(const vector<double>& w)
+    {
+        _w = w;
+    }
+    void set_l2(const double l2)
+    {
+        _l2 = l2;
+    }
 private:
     double wx(const Feature* sample, const vector<double>& w);
     double log_loss(const Feature* sample, double label);
 private:
     // model param
     vector<double> _w;
+    double _l2;
 };
 
 }

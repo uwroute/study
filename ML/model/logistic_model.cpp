@@ -61,6 +61,13 @@ void LogisticModel::grad(const vector<double>& w, DataSet& data, vector<double>&
             sample++;
         }
     }
+    if (_l2 > MinDoubleValue)
+    {
+        for (int i=0; i<grad.size(); ++i)
+        {
+            grad[i] += _l2*w[i];
+        }
+    }
 }
 void LogisticModel::loss(const vector<double>& w, DataSet& data, double& loss);
 {
@@ -68,7 +75,14 @@ void LogisticModel::loss(const vector<double>& w, DataSet& data, double& loss);
     for (size_t i=0; i<data.sample_num; ++i)
     {
         loss += log_loss(&(data.samples[0]) + data.sample_idx[i], data.labels[i]);
-    }    
+    }
+    if (_l2 > MinDoubleValue)
+    {
+        for (int i=0; i<grad.size(); ++i)
+        {
+            loss += 0.5*_l2*w[i]*w[i];
+        }
+    } 
 }
 void LogisticModel::grad_and_loss(const vector<double>& w, DataSet& data, vector<double>& grad, double& loss);
 {
@@ -91,6 +105,14 @@ void LogisticModel::grad_and_loss(const vector<double>& w, DataSet& data, vector
                 grad[sample->index] += g*sample->value;
                 sample++;
             }
+        }
+    }
+    if (_l2 > MinDoubleValue)
+    {
+        for (int i=0; i<grad.size(); ++i)
+        {
+            grad[i] += _l2*w[i];
+            loss += 0.5*_l2*w[i]*w[i];
         }
     }
 }

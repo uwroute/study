@@ -22,6 +22,8 @@ namespace ML {
 
 using std::vector;
 
+const double MinDoubleValue = 1.0e10;
+
 // virtual interface Model for compute loss and grad
 // child class such as logistic and linear model
 class Model
@@ -33,6 +35,7 @@ public:
     virtual double predict(const Feature* sample);
     virtual void save_model(const char* model_file);
     virtual void load_model(const char* model_file);
+    virtual void set_param(const vector<double>& w);
 public:
     // special interface for opt
     virtual double predict(const Feature* sample, const vector<double>& w);
