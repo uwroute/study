@@ -26,7 +26,7 @@ using std::vector;
 class OWLQN
 {
 public:
-    OWLQN(){}
+    OWLQN():_steepest_dir(_next_grad){}
     ~OWLQN(){}
 public:
     void optimize();

@@ -32,13 +32,13 @@ public:
     // Common interface
     Model(){}
     virtual ~Model(){}
-    virtual double predict(const Feature* sample);
-    virtual void save_model(const char* model_file);
-    virtual void load_model(const char* model_file);
-    virtual void set_param(const vector<double>& w);
+    virtual double predict(const Feature* sample) = 0;
+    virtual void save_model(const char* model_file) = 0;
+    virtual void load_model(const char* model_file) = 0;
+    virtual void set_param(const vector<double>& w) = 0;
 public:
     // special interface for opt
-    virtual double predict(const Feature* sample, const vector<double>& w);
+    virtual double predict(const Feature* sample, const vector<double>& w) = 0;
     virtual void grad(const vector<double>& w, const DataSet& data, vector<double>& grad) = 0;
     virtual void loss(const vector<double>& w, const DataSet& data, double& loss) = 0;
     virtual void grad_and_loss(const vector<double>& w, const DataSet& data, vector<double>& grad, double& loss) = 0;

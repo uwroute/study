@@ -79,7 +79,7 @@ void OWLQN::optimize()
         linearSearch();
         shiftState();
     }
-    _model->save_param(_w);
+    _model->set_param(_w);
 }
 
 void OWLQN::updateDir()
