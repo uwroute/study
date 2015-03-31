@@ -32,12 +32,20 @@ void FTRL::train(const DoubleHashMap& sample, double y)
         CHECK_MAP(_z, iter->first);
         CHECK_MAP(_w, iter->first);
 
+		// grad|t
+		// n|t = sum(grad*grad)|1:t
+		// sigma = sqrt(n|t) - sqrt(n|t-1)/_alpha
+		// z|t = z|t-1 + grad|t - sigma*w|t
         double grad = err*iter->second;
         double next_n = _n[iter->first] + grad*grad;
         double sigma = (sqrt(next_n) - sqrt(_n[iter->first]))/_alpha;
         _z[iter->first] += grad - sigma * _w[iter->first];
         _n[iter->first] = next_n;
 
+		// |z|t|<_l1 : w|t = 0
+		// other : w|t = -1/(1/lr + l2) * (z|t - sign(z|t)*lamda1)
+		// z|t < -l1 : w|t > 0
+		// z|t > l1 : w|t < 0
         if (fabs(_z[iter->first]) < _lamda1)
         {
             _w[iter->first] = 0.0;
@@ -56,8 +64,10 @@ double FTRL::predict(const DoubleHashMap& sample)
     double wx = 0.0;
     for (DoubleHashMap::const_iterator iter = sample.begin(); iter != sample.end(); ++iter)
     {
-        CHECK_MAP(_w, iter->first);
-        wx += _w[iter->first] * iter->second;
+		if (_w.end() != _w.find(iter->first))
+		{
+			wx += _w[iter->first] * iter->second;
+		}
     }
     if (wx > 30.0)
     {
