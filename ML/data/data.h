@@ -41,6 +41,7 @@ struct DataSet
 
 int toSample(const std::string& line, std::vector<Feature>& sample, double& label);
 int load_data(const std::string& file, DataSet& data);
-};
+
+}
 
 #endif  // _STRING_UTIL_H_

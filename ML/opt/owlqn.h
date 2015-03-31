@@ -1,7 +1,25 @@
+/*=============================================================================
+#
+# Author: route - uwnroute@126.com
+#
+# Last modified: 2015-03-21 10:07
+#
+# Filename: owlqn.h
+#
+# Description: 
+#
+=============================================================================*/
+#ifndef _OWLQN_H_
+#define _OWLQN_H_
+
 #include <vector>
 #include <string>
 #include <iostream>
-#include "model.h"
+#include "model/model.h"
+#include "data/data.h"
+
+namespace ML
+{
 
 using std::vector;
 
@@ -23,6 +41,8 @@ private:
     void linearSearch();
     void shiftState();
 	double l1Loss();
+    void getNextPoint(double alpha);
+    bool checkEnd();
 private:
     double dotProduct(vector<double>& x, vector<double>& y);
 	void add(vector<double>& out, const vector<double>& in);
@@ -32,7 +52,7 @@ private:
 	void scaleInto(vector<double>& out, const vector<double>& x, const double scale);
 private:
     // current param
-    int _N;
+    size_t _N;
     vector<double> _w;
     vector<double> _next_w;
     // current dir
@@ -42,7 +62,7 @@ private:
     double _loss;
     // S,Y in LBFGS
     vector<double> _alpha;
-    vector<double> _beta;
+    double _beta;
     vector<double> _sy;
     int _M;
     vector<vector<double> > _Y;
@@ -53,7 +73,6 @@ private:
     Model* _model;
     DataSet* _data;
     // overfit
-    double _l2;
     double _l1;
     // train param
     int _max_iter;
@@ -61,3 +80,6 @@ private:
     double _error;
 };
 
+}
+
+#endif

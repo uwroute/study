@@ -1,4 +1,9 @@
-#include <owlqn.h>
+#include "owlqn.h"
+#include "Common/log.h"
+#include <math.h>
+
+namespace ML
+{
 
 double OWLQN::dotProduct(vector<double>& x, vector<double>& y)
 {
@@ -29,7 +34,7 @@ void addScaleInto(vector<double>& out, const vector<double>& x, const vector<dou
 {
 	for (size_t i=0; i<out.size(); ++i)
     {
-        out[i] = x + scale*y[i];
+        out[i] = x[i] + scale*y[i];
     }
 }
 
@@ -47,6 +52,16 @@ void scaleInto(vector<double>& out, const vector<double>& x, const double scale)
     {
         out[i] = x[i]*scale;
     }
+}
+
+bool OWLQN::checkEnd()
+{
+    double value = dotProduct(_grad, _grad);
+    if (value < _error)
+    {
+        return true;
+    }
+    return false;
 }
 
 void OWLQN::optimize()
@@ -75,18 +90,18 @@ void OWLQN::updateDir()
 
 void OWLQN::makeSteepestDescDir()
 {
-    model->grad_and_loss(_w, *_data, _grad, _loss);
+    _model->grad_and_loss(_w, *_data, _grad, _loss);
 	if (_l1>0)
     {
-        for (int i=0; i<_N; ++i)
+        for (size_t i=0; i<_N; ++i)
         {
             if (_w[i] > MinDoubleValue)
             {
-                _dir[i] = -1.0*(_grad[i] + _l1)
+                _dir[i] = -1.0*(_grad[i] + _l1);
             }
             else if (_w[i] < -1.0*MinDoubleValue)
             {
-                _dir[i] = -1.0*(_grad[i] - _l1)
+                _dir[i] = -1.0*(_grad[i] - _l1);
             }
             else
             {
@@ -109,7 +124,7 @@ void OWLQN::makeSteepestDescDir()
     }
     else
     {
-        for (int i=0; i<_N; ++i)
+        for (size_t i=0; i<_N; ++i)
         {
             _dir[i] = -1.0*_grad[i];
         }
@@ -130,10 +145,10 @@ void OWLQN::mapDirByInverseHessian()
         i = (i-1)%_M;
         _sy[i] = dotProduct(_S[i], _Y[i]);
         _alpha[i] = dotProduct(_S[i], _dir) / _sy[i];
-		addScale(_dir, _Y[i], -alpha[i]);
+		addScale(_dir, _Y[i], -1.0*_alpha[i]);
     }
     // H0 = I*(s'y/y'y)
-    i = (_end-1)%M;
+    i = (_end-1)%_M;
     double yy = _sy[i]/dotProduct(_Y[i], _Y[i]);
 	scale(_dir, yy);
     // second loop
@@ -142,17 +157,17 @@ void OWLQN::mapDirByInverseHessian()
     {
         _beta = dotProduct(_Y[i], _dir) / _sy[i];
 		addScale(_dir, _S[i], -_beta-_alpha[i]);
-        i = (i+1)%M;
+        i = (i+1) % _M;
     }
 }
 
-void fixDirSign()
+void OWLQN::fixDirSign()
 {
 	// fix dir sign
     // check dir direction, same direction with l1 grad
 	if (_l1 > MinDoubleValue)
 	{	
-		for (int i=0; i<_N; ++i)
+		for (size_t i=0; i<_N; ++i)
 		{
 			double steepest_dir = 0.0;
 			if (_w[i] > MinDoubleValue)
@@ -197,7 +212,7 @@ double OWLQN::checkDir()
 	}
 	else
 	{	
-		for (int i=0; i<_N; ++i)
+		for (size_t i=0; i<_N; ++i)
 		{
 			double l1_grad = 0.0;
 			if (_w[i] > MinDoubleValue)
@@ -245,7 +260,7 @@ void OWLQN::getNextPoint(double alpha) {
 double OWLQN::l1Loss()
 {
 	double loss = 0.0;
-	model->loss(_next_w, *_data, loss);
+	_model->loss(_next_w, *_data, loss);
 	if (_l1 > MinDoubleValue)
 	{
 		for (size_t i=0; i<_N; i++) {
@@ -268,7 +283,7 @@ void OWLQN::linearSearch()
 	
 	double alpha = 1.0;
 	double backoff = 0.5;
-	if (iter == 1) {
+	if (_cur_iter == 1) {
 		//alpha = 0.1;
 		//backoff = 0.5;
 		double normDir = sqrt(dotProduct(_dir, _dir));
@@ -278,6 +293,7 @@ void OWLQN::linearSearch()
 
 	const double p = 1e-4;
 	double oldValue = _loss;
+    double value = 0.0;
 
 	while (true) {
 		getNextPoint(alpha);
@@ -291,14 +307,16 @@ void OWLQN::linearSearch()
 
 void OWLQN::shiftState()
 {
-    for (size_t k=0; k<_w.size(); ++i)
+    for (size_t k=0; k<_w.size(); ++k)
     {
         _S[_end][k] = _next_w[k] - _w[k];
         _Y[_end][k] = _next_grad[k] - _grad[k];
     }
-    _end = (_end+1) % M;
-    if (_cur_iter > M)
+    _end = (_end+1) % _M;
+    if (_cur_iter > _M)
     {
-        _start = (_start+1) % M;
+        _start = (_start+1) % _M;
     }
+}
+
 }

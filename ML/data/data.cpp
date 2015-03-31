@@ -129,4 +129,4 @@ int load_data(const std::string& file, DataSet& data)
     return 0;
 }
 
-};
+}
