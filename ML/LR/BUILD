@@ -8,4 +8,5 @@ cc_binary(
     deps = ['//ML/Common:common',
             '//ThirdParty/gflags/lib:gflags'
            ],
+    #optimize = ['O']
 )
