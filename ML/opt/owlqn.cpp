@@ -5,6 +5,27 @@
 namespace ML
 {
 
+void OWLQN::set_dim(int dim)
+{
+    _N = dim;
+    vector<double> tmp(_N, 0);
+    _w = tmp;
+    _next_w = tmp;
+    _dir = tmp;
+    _grad = tmp;
+    _next_grad = tmp;
+    for (int i=0; i<=_M; ++i)
+    {
+        _Y.push_back(tmp);
+        _S.push_back(tmp);
+    }
+    _alpha.resize(_M+1);
+    _sy.resize(_M+1);
+    _start = 0;
+    _end = 0;
+    _cur_iter = 0;
+}
+
 double OWLQN::dotProduct(vector<double>& x, vector<double>& y)
 {
     double value = 0.0;
@@ -22,7 +43,7 @@ void OWLQN::add(vector<double>& out, const vector<double>& in)
     }
 }
 
-void addScale(vector<double>& out, const vector<double>& x, const double scale)
+void OWLQN::addScale(vector<double>& out, const vector<double>& x, const double scale)
 {
 	for (size_t i=0; i<out.size(); ++i)
     {
@@ -30,7 +51,7 @@ void addScale(vector<double>& out, const vector<double>& x, const double scale)
     }
 }
 
-void addScaleInto(vector<double>& out, const vector<double>& x, const vector<double>& y, const double scale)
+void OWLQN::addScaleInto(vector<double>& out, const vector<double>& x, const vector<double>& y, const double scale)
 {
 	for (size_t i=0; i<out.size(); ++i)
     {
@@ -38,7 +59,7 @@ void addScaleInto(vector<double>& out, const vector<double>& x, const vector<dou
     }
 }
 
-void scale(vector<double>& out, const double scale)
+void OWLQN::scale(vector<double>& out, const double scale)
 {
 	for (size_t i=0; i<out.size(); ++i)
     {
@@ -46,7 +67,7 @@ void scale(vector<double>& out, const double scale)
     }
 }
 	
-void scaleInto(vector<double>& out, const vector<double>& x, const double scale)
+void OWLQN::scaleInto(vector<double>& out, const vector<double>& x, const double scale)
 {
 	for (size_t i=0; i<out.size(); ++i)
     {

@@ -106,7 +106,7 @@ private:
     double linear_search();
 private:
     // util func
-    const static double MIN_DOUBLE = 1.0e-10;
+    const static double MIN_DOUBLE;
     bool is_negative(double x) {return x < -MIN_DOUBLE;}
     bool is_positive(double x) {return x > MIN_DOUBLE;}
     void init_matrix(std::vector<DoubleDenseVec>& matrix, size_t M, size_t N);

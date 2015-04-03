@@ -2,7 +2,7 @@
 #
 # Author: route - uwnroute@126.com
 #
-# Last modified: 2015-03-21 10:08
+# Last modified: Fri 03 Apr 2015 12:05:16 PM CST [10.146.36.174]
 #
 # Filename: data.cpp
 #
@@ -15,6 +15,8 @@
 #include "log.h"
 #include "string_util.h"
 #include "data.h"
+
+using namespace Common;
 
 #define CHECK_AND_DELETE(p) \
 	if (p)					\

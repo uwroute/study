@@ -2,7 +2,7 @@
 #
 # Author: route - uwnroute@126.com
 #
-# Last modified: 2015-03-21 10:07
+# Last modified: Fri 03 Apr 2015 03:48:27 PM CST [10.146.36.174]
 #
 # Filename: owlqn.h
 #
@@ -30,6 +30,13 @@ public:
     ~OWLQN(){}
 public:
     void optimize();
+    void set_data(DataSet* data) {_data=data;}
+    void set_model(Model* model) {_model=model;}
+    void set_l1(double l1) {_l1=l1;}
+    void set_max_iter(int iter) {_max_iter=iter;}
+    void set_m(int m) {_M = m;}
+    void set_error(double e) {_error=e;}
+    void set_dim(int dim);
 private:
     void makeSteepestDescDir(); // -grad dir
 	void mapDirByInverseHessian(); // -Hk+1*grad

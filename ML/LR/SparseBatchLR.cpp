@@ -7,6 +7,7 @@
 #include "ML/Common/string_util.h"
 #include "ML/Common/log.h"
 
+const double SparseBatchLR::MIN_DOUBLE = 1.0e-10;
 // public interface
 void SparseBatchLR::load_data_file(const std::string& file)
 {
