@@ -2,7 +2,7 @@
 #
 # Author: route - uwnroute@126.com
 #
-# Last modified: Mon 06 Apr 2015 10:38:09 PM CST [10.146.36.174]
+# Last modified: Tue 07 Apr 2015 05:27:33 PM CST [10.146.36.174]
 #
 # Filename: owlqn.h
 #
@@ -26,8 +26,7 @@ using std::vector;
 class OWLQN
 {
 public:
-    // OWLQN():_steepest_dir(_next_grad){}
-    OWLQN(){}
+    OWLQN():_steepest_dir(_next_grad){}
     ~OWLQN(){}
 public:
     void optimize();
@@ -37,7 +36,9 @@ public:
     void set_max_iter(int iter) {_max_iter=iter;}
     void set_m(int m) {_M = m;}
     void set_error(double e) {_error=e;}
-    void set_dim(int dim);
+    void set_dim(int dim) {_N = dim;}
+    void init();
+    int caluc_space();
 private:
     void makeSteepestDescDir(); // -grad dir
 	void mapDirByInverseHessian(); // -Hk+1*grad
@@ -65,7 +66,7 @@ private:
     vector<double> _dir;
     vector<double> _grad;
     vector<double> _next_grad;
-    vector<double> _steepest_dir;
+    vector<double>& _steepest_dir;
     double _loss;
     // S,Y in LBFGS
     vector<double> _alpha;

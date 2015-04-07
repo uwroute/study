@@ -2,7 +2,7 @@
 #
 # Author: route - uwnroute@126.com
 #
-# Last modified: Mon 06 Apr 2015 10:50:04 PM CST [10.146.36.174]
+# Last modified: Tue 07 Apr 2015 05:34:02 PM CST [10.146.36.174]
 #
 # Filename: logistic.cpp
 #
@@ -58,6 +58,8 @@ int main(int argc, char** argv)
     opt.set_error(FLAGS_error);
     opt.set_m(FLAGS_m);
     opt.set_dim(data.max_fea_num);
+    LOG_INFO("Opt require space : %d bytes!", opt.caluc_space());
+    opt.init();
     opt.optimize();
     
     LOG_INFO("%s", "Save model!");

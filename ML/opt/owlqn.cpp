@@ -5,21 +5,19 @@
 namespace ML
 {
 
-void OWLQN::set_dim(int dim)
+void OWLQN::init()
 {
-    _N = dim;
     vector<double> tmp(_N, 0);
-    _w = tmp;
-    _next_w = tmp;
-    _dir = tmp;
-    _grad = tmp;
-    _next_grad = tmp;
-    _steepest_dir = tmp;
+    _w.swap(tmp);
+    _next_w = _w;
+    _dir = _w;
+    _grad = _w;
+    _next_grad = _w;
+    _steepest_dir = _w;
     for (int i=0; i<=_M; ++i)
     {
-        vector<double> tmp2(_N, 0);
-        _Y.push_back(tmp2);
-        _S.push_back(tmp2);
+        _Y.push_back(_w);
+        _S.push_back(_w);
     }
     _alpha.resize(_M+1);
     _sy.resize(_M+1);
@@ -184,12 +182,10 @@ void OWLQN::mapDirByInverseHessian()
     // Hk+1 = (I-sy'/s'y)*Hk*(I-ys'/s'y) + ss'/s'y
     // dir = -Hk+1*grad
     // one loop, compute q[i] = 
-    LOG_DEBUG("start : %d, end : %d, M : %d", _start, _end, _M);
     int i = _end;
     while(i != _start)
     {
         i = (i-1+_M)%_M;
-        LOG_DEBUG("i : %d, sy : %lf", i, _sy[i]);
         _alpha[i] = -1.0*dotProduct(_S[i], _dir) / _sy[i];
         addScale(_dir, _Y[i], _alpha[i]);
     }
@@ -255,7 +251,7 @@ void OWLQN::getNextPoint(double alpha) {
 double OWLQN::l1Loss()
 {
 	double loss = 0.0;
-	_model->loss(_next_w, *_data, loss);
+    _model->grad_and_loss(_next_w, *_data, _next_grad, loss);
 	if (_l1 > MinDoubleValue)
 	{
 		for (size_t i=0; i<_N; i++) {
@@ -287,7 +283,7 @@ void OWLQN::linearSearch()
 
 	const double p = 1e-4;
 	double oldValue = _loss;
-    double value = 0.0;
+    double& value = _loss;
 
 	while (true) {
         LOG_INFO("Linear search step : %lf", alpha);
@@ -302,20 +298,47 @@ void OWLQN::linearSearch()
 
 void OWLQN::shiftState()
 {
-    _model->grad_and_loss(_next_w, *_data, _next_grad, _loss);
     for (size_t k=0; k<_w.size(); ++k)
     {
         _S[_end][k] = _next_w[k] - _w[k];
         _Y[_end][k] = _next_grad[k] - _grad[k];
-        _w[k] = _next_w[k];
-        _grad[k] = _next_grad[k];
     }
     _sy[_end] = dotProduct(_S[_end], _Y[_end]);
+
+    _w.swap(_next_w);
+    _grad.swap(_next_grad);
+
     _end = (_end+1) % _M;
     if (_cur_iter >= _M)
     {
         _start = (_start+1) % _M;
     }
+}
+
+int OWLQN::caluc_space()
+{
+    int space = 0;
+    space += sizeof(size_t); // _N
+    space += _N*sizeof(double); // _w
+    space += _N*sizeof(double); // _next_w
+    space += _N*sizeof(double); // _dir
+    space += _N*sizeof(double); // _grad
+    space += _N*sizeof(double); // _next_grad
+    space += sizeof(void*); // _steepest_dir
+    space += (_M+1)*sizeof(double); // _alpha
+    space += (_M+1)*sizeof(double); // _sy
+    space += sizeof(double); // _beta
+    space += (_M+1)*_N*sizeof(double); // _Y
+    space += (_M+1)*_N*sizeof(double); // _S
+    space += sizeof(int); // _start
+    space += sizeof(int); // _end
+    space += sizeof(void*); // _model
+    space += sizeof(void*); // _data
+    space += sizeof(double); // _l1
+    space += sizeof(int); // _max_iter
+    space += sizeof(int); // _cur_iter
+    space += sizeof(double); // _error
+    return space;
 }
 
 }
