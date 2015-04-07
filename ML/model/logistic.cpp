@@ -2,7 +2,7 @@
 #
 # Author: route - uwnroute@126.com
 #
-# Last modified: Fri 03 Apr 2015 03:51:41 PM CST [10.146.36.174]
+# Last modified: Mon 06 Apr 2015 10:50:04 PM CST [10.146.36.174]
 #
 # Filename: logistic.cpp
 #
@@ -49,7 +49,7 @@ int main(int argc, char** argv)
     LogisticModel lr_model;
     lr_model.set_l2(FLAGS_reg2);
     lr_model.set_dim(data.max_fea_num);
-
+    
     OWLQN opt;
     opt.set_data(&data);
     opt.set_model(&lr_model);
@@ -59,8 +59,10 @@ int main(int argc, char** argv)
     opt.set_m(FLAGS_m);
     opt.set_dim(data.max_fea_num);
     opt.optimize();
-
+    
+    LOG_INFO("%s", "Save model!");
     lr_model.save_model(FLAGS_model_file.c_str());
+    LOG_INFO("%s", "Save model end!");
 
     return 0;
 }

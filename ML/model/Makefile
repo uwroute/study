@@ -6,13 +6,13 @@ LDFLAGS=-L${GFLAGS_LIB_PATH}
 LIBS=-lgflags
 
 LR : logistic.cpp libModel.a
-	g++ -g -o LR -O3 logistic.cpp -I../ -I../../Common/ThirdParty/gflags/include/ -L../../Common/ThirdParty/gflags/lib/ -lgflags -L./ -lModel -L../opt/ -lopt -L../data/ -ldata
+	g++ -g -o LR logistic.cpp -I../ -I../../Common/ThirdParty/gflags/include/ -L../../Common/ThirdParty/gflags/lib/ -lgflags -L./ -lModel -L../opt/ -lopt -L../data/ -ldata
 
 libModel.a : logistic_model.o
 	ar r libModel.a logistic_model.o
 
 logistic_model.o : logistic_model.cpp
-	g++ -g -c -O3 logistic_model.cpp -I../
+	g++ -g -c logistic_model.cpp -I../
 
 
 .PHONY : clean

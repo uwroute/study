@@ -2,7 +2,7 @@
 #
 # Author: route - uwnroute@126.com
 #
-# Last modified: Fri 03 Apr 2015 03:36:23 PM CST [10.146.36.174]
+# Last modified: Mon 06 Apr 2015 10:39:51 PM CST [10.146.36.174]
 #
 # Filename: logistic_model.h
 #
@@ -35,7 +35,11 @@ public:
     void grad_and_loss(const vector<double>& w, const DataSet& data, vector<double>& grad, double& loss);
     void set_param(const vector<double>& w)
     {
-        _w = w;
+        _w.resize(w.size());
+        for (int i=0; i<w.size(); ++i)
+        {
+            _w[i] = w[i];
+        }
     }
     void set_l2(const double l2)
     {

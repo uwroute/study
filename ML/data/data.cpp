@@ -2,7 +2,7 @@
 #
 # Author: route - uwnroute@126.com
 #
-# Last modified: Mon 30 Mar 2015 05:53:29 PM CST [10.146.36.174]
+# Last modified: Tue 07 Apr 2015 09:44:18 AM CST [10.146.36.174]
 #
 # Filename: data.cpp
 #
@@ -53,6 +53,7 @@ int toSample(const std::string& line, std::vector<Feature>& sample, double& labe
         fea.value = 0.0;
         if (sscanf(vec[i].c_str(), "%d:%lf", &(fea.index), &(fea.value)))
         {
+            fea.index --;
             sample.push_back(fea);
         }
         MAX_FEA_NUM = std::max(MAX_FEA_NUM, fea.index);
@@ -122,6 +123,7 @@ int load_data(const std::string& file, DataSet& data)
         }
         getline(infile, line);
     }
+    data.max_fea_num ++;
     LOG_INFO("Load Data : Sample Fea Num = %lu", data.samples.size());
     LOG_INFO("Load Data : Sample Num = %lu", data.labels.size());
     LOG_INFO("Load Data : Max Fea Num = %d", data.max_fea_num);

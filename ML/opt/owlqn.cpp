@@ -14,10 +14,12 @@ void OWLQN::set_dim(int dim)
     _dir = tmp;
     _grad = tmp;
     _next_grad = tmp;
+    _steepest_dir = tmp;
     for (int i=0; i<=_M; ++i)
     {
-        _Y.push_back(tmp);
-        _S.push_back(tmp);
+        vector<double> tmp2(_N, 0);
+        _Y.push_back(tmp2);
+        _S.push_back(tmp2);
     }
     _alpha.resize(_M+1);
     _sy.resize(_M+1);
@@ -77,8 +79,13 @@ void OWLQN::scaleInto(vector<double>& out, const vector<double>& x, const double
 
 bool OWLQN::checkEnd()
 {
+    if (_cur_iter == 0)
+    {
+        _model->grad_and_loss(_w, *_data, _grad, _loss);
+    }
     double value = dotProduct(_grad, _grad);
-    if (value < _error)
+    LOG_INFO("grad : %lf, dst : %lf", value, _error);
+    if (_cur_iter > 0 && value < _error)
     {
         return true;
     }
@@ -91,29 +98,37 @@ void OWLQN::optimize()
     // compute grad
     while (_cur_iter < _max_iter)
     {
+        LOG_INFO("-------------Iter %d start!----------------", _cur_iter);
 		if (checkEnd())
 		{
 			LOG_INFO("Train finished After Iter %d!", _cur_iter);
+            break;
 		}
-        _cur_iter ++;
+        LOG_INFO("Loss : %lf", _loss);
         updateDir();
         linearSearch();
         shiftState();
+        LOG_INFO("-------------Iter %d end!------------------", _cur_iter);
+        _cur_iter ++;
     }
     _model->set_param(_w);
 }
 
 void OWLQN::updateDir()
 {
+    LOG_DEBUG("%s", "Update Dir Start!");
+    LOG_DEBUG("%s", "Compute steepest desc dir!");
 	makeSteepestDescDir();
+    LOG_DEBUG("%s", "Compute newton dir!");
 	mapDirByInverseHessian();
+    LOG_DEBUG("%s", "Fix dir sign!");
 	fixDirSign();
+    LOG_DEBUG("%s", "Update Dir End!");
 }
 
 void OWLQN::makeSteepestDescDir()
 {
-    _model->grad_and_loss(_w, *_data, _grad, _loss);
-	if (_l1>0)
+	if (_l1 > MinDoubleValue)
     {
         for (size_t i=0; i<_N; ++i)
         {
@@ -159,24 +174,30 @@ void OWLQN::makeSteepestDescDir()
 
 void OWLQN::mapDirByInverseHessian()
 {
+    if (_cur_iter == 0)
+    {
+        return;
+    }
     // two loop lbfgs
     // Hk+1 = G-1
     // Hk+1 * yk = sk
     // Hk+1 = (I-sy'/s'y)*Hk*(I-ys'/s'y) + ss'/s'y
     // dir = -Hk+1*grad
     // one loop, compute q[i] = 
+    LOG_DEBUG("start : %d, end : %d, M : %d", _start, _end, _M);
     int i = _end;
     while(i != _start)
     {
-        i = (i-1)%_M;
-        _sy[i] = dotProduct(_S[i], _Y[i]);
-        _alpha[i] = dotProduct(_S[i], _dir) / _sy[i];
-		addScale(_dir, _Y[i], -1.0*_alpha[i]);
+        i = (i-1+_M)%_M;
+        LOG_DEBUG("i : %d, sy : %lf", i, _sy[i]);
+        _alpha[i] = -1.0*dotProduct(_S[i], _dir) / _sy[i];
+        addScale(_dir, _Y[i], _alpha[i]);
     }
     // H0 = I*(s'y/y'y)
-    i = (_end-1)%_M;
+    i = (_end-1+_M)%_M;
     double yy = _sy[i]/dotProduct(_Y[i], _Y[i]);
-	scale(_dir, yy);
+    LOG_DEBUG("init H = %lf * I", yy);
+    scale(_dir, yy);
     // second loop
     i = _start;
     while (i != _end)
@@ -206,7 +227,7 @@ void OWLQN::fixDirSign()
 double OWLQN::checkDir()
 {
 	double value = 0.0;
-	if (_l1 < -1.0*MinDoubleValue)
+	if (_l1 < MinDoubleValue)
 	{
 		value = dotProduct(_dir, _grad);
 	}
@@ -214,33 +235,6 @@ double OWLQN::checkDir()
 	{	
 		for (size_t i=0; i<_N; ++i)
 		{
-/*			double l1_grad = 0.0;
-			if (_w[i] > MinDoubleValue)
-            {
-                l1_grad = _grad[i] + _l1;
-            }
-            else if (_w[i] < -1.0*MinDoubleValue)
-            {
-                l1_grad = _grad[i] - _l1;
-            }
-            else
-            {
-                double l_grad = _grad[i]-_l1;
-                double r_grad = _grad[i]+_l1;
-                if (r_grad < -1.0*MinDoubleValue)
-                {
-                    l1_grad = r_grad;
-                }
-                else if (l_grad > MinDoubleValue)
-                {
-                    l1_grad = l_grad;
-                }
-                else
-                {
-                    l1_grad = 0.0;
-                }
-            }
-// */
 			value += -1.0*_dir[i]*_steepest_dir[i];
 		}
 	}
@@ -281,25 +275,25 @@ void OWLQN::linearSearch()
 		LOG_ERROR("%s", "Dir is not desc direction !");
 		exit(1);
 	}
+    LOG_DEBUG("descDir : %lf", descDir);
 	
 	double alpha = 1.0;
 	double backoff = 0.5;
-	if (_cur_iter == 1) {
-		//alpha = 0.1;
-		//backoff = 0.5;
+	if (_cur_iter == 0) {
 		double normDir = sqrt(dotProduct(_dir, _dir));
 		alpha = (1 / normDir);
 		backoff = 0.1;
-	}
+    }
 
 	const double p = 1e-4;
 	double oldValue = _loss;
     double value = 0.0;
 
 	while (true) {
+        LOG_INFO("Linear search step : %lf", alpha);
 		getNextPoint(alpha);
 		value = l1Loss();
-
+        LOG_DEBUG("Linear search value : %lf, old_value : %lf", value, oldValue);
 		if (value <= oldValue + p * descDir * alpha) break;
 
 		alpha *= backoff;
@@ -308,14 +302,17 @@ void OWLQN::linearSearch()
 
 void OWLQN::shiftState()
 {
+    _model->grad_and_loss(_next_w, *_data, _next_grad, _loss);
     for (size_t k=0; k<_w.size(); ++k)
     {
         _S[_end][k] = _next_w[k] - _w[k];
         _Y[_end][k] = _next_grad[k] - _grad[k];
         _w[k] = _next_w[k];
+        _grad[k] = _next_grad[k];
     }
+    _sy[_end] = dotProduct(_S[_end], _Y[_end]);
     _end = (_end+1) % _M;
-    if (_cur_iter > _M)
+    if (_cur_iter >= _M)
     {
         _start = (_start+1) % _M;
     }

@@ -1,6 +1,7 @@
 #include "logistic_model.h"
 #include <cmath>
 #include <fstream>
+#include "Common/log.h"
 
 namespace ML {
 
@@ -13,6 +14,7 @@ double LogisticModel::wx(const Feature* sample, const vector<double>& w)
     while (sample->index != -1)
     {
         wx += sample->value * w[sample->index];
+        sample++;
     }
     return wx;
 }
@@ -50,11 +52,15 @@ double LogisticModel::log_loss(const Feature* sample, const vector<double>& w, d
 }
 void LogisticModel::grad(const vector<double>& w, const DataSet& data, vector<double>& grads)
 {
+    for (size_t i=0; i<grads.size(); ++i)
+    {
+        grads[i] = 0.0;
+    }
     for (size_t i=0; i<data.sample_num; ++i)
     {
         const Feature* sample = &(data.samples[data.sample_idx[i]]);
         double h = predict(sample, w);
-        double y = data.labels[data.sample_idx[i]];
+        double y = data.labels[i];
         if (y < 0.5)
         {
             y = 0.0;
@@ -79,7 +85,7 @@ void LogisticModel::loss(const vector<double>& w, const DataSet& data, double& l
     loss = 0.0;
     for (size_t i=0; i<data.sample_num; ++i)
     {
-        loss += log_loss(&(data.samples[0]) + data.sample_idx[i], _w, data.labels[i]);
+        loss += log_loss(&(data.samples[0]) + data.sample_idx[i], w, data.labels[i]);
     }
     if (_l2 > MinDoubleValue)
     {
@@ -87,29 +93,30 @@ void LogisticModel::loss(const vector<double>& w, const DataSet& data, double& l
         {
             loss += 0.5*_l2*w[i]*w[i];
         }
-    } 
+    }
 }
 void LogisticModel::grad_and_loss(const vector<double>& w, const DataSet& data, vector<double>& grad, double& loss)
 {
     loss = 0.0;
+    for (size_t i=0; i<grad.size(); ++i)
+    {
+        grad[i] = 0.0;
+    }
     for (size_t i=0; i<data.sample_num; ++i)
     {
-        loss += log_loss(&(data.samples[0]) + data.sample_idx[i], _w, data.labels[i]);
-        for (size_t i=0; i<data.sample_num; ++i)
+        const Feature* sample = &(data.samples[data.sample_idx[i]]);
+        loss += log_loss(sample, w, data.labels[i]);
+        double h = predict(sample, w);
+        double y = data.labels[i];
+        if (y < 0.5)
         {
-            const Feature* sample = &(data.samples[data.sample_idx[i]]);
-            double h = predict(sample, w);
-            double y = data.labels[data.sample_idx[i]];
-            if (y < 0.5)
-            {
-                y = 0.0;
-            }
-            double g = h - y;
-            while (sample->index != -1)
-            {
-                grad[sample->index] += g*sample->value;
-                sample++;
-            }
+            y = 0.0;
+        }
+        double g = h - y;
+        while (sample->index != -1)
+        {
+            grad[sample->index] += g*sample->value;
+            sample++;
         }
     }
     if (_l2 > MinDoubleValue)
