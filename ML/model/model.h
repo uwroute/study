@@ -41,7 +41,7 @@ public:
     virtual void grad(const vector<double>& w, const DataSet& data, vector<double>& grad) = 0;
     virtual void loss(const vector<double>& w, const DataSet& data, double& loss) = 0;
     virtual void grad_and_loss(const vector<double>& w, const DataSet& data, vector<double>& grad, double& loss) = 0;
-    virtual void set_param(const vector<double>& w) = 0;
+    virtual void set_param(vector<double>& w) = 0;
 };
 
 }
