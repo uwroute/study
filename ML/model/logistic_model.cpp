@@ -56,7 +56,7 @@ void LogisticModel::grad(const vector<double>& w, const DataSet& data, vector<do
     {
         grads[i] = 0.0;
     }
-    for (size_t i=0; i<data.sample_num; ++i)
+    for (int i=0; i<data.sample_num; ++i)
     {
         const Feature* sample = &(data.samples[data.sample_idx[i]]);
         double h = predict(sample, w);
@@ -74,7 +74,7 @@ void LogisticModel::grad(const vector<double>& w, const DataSet& data, vector<do
     }
     if (_l2 > MinDoubleValue)
     {
-        for (int i=0; i<grads.size(); ++i)
+        for (size_t i=0; i<grads.size(); ++i)
         {
             grads[i] += _l2*w[i];
         }
@@ -83,13 +83,13 @@ void LogisticModel::grad(const vector<double>& w, const DataSet& data, vector<do
 void LogisticModel::loss(const vector<double>& w, const DataSet& data, double& loss)
 {
     loss = 0.0;
-    for (size_t i=0; i<data.sample_num; ++i)
+    for (int i=0; i<data.sample_num; ++i)
     {
         loss += log_loss(&(data.samples[0]) + data.sample_idx[i], w, data.labels[i]);
     }
     if (_l2 > MinDoubleValue)
     {
-        for (int i=0; i<w.size(); ++i)
+        for (size_t i=0; i<w.size(); ++i)
         {
             loss += 0.5*_l2*w[i]*w[i];
         }
@@ -102,7 +102,7 @@ void LogisticModel::grad_and_loss(const vector<double>& w, const DataSet& data, 
     {
         grad[i] = 0.0;
     }
-    for (size_t i=0; i<data.sample_num; ++i)
+    for (int i=0; i<data.sample_num; ++i)
     {
         const Feature* sample = &(data.samples[data.sample_idx[i]]);
         loss += log_loss(sample, w, data.labels[i]);
@@ -121,7 +121,7 @@ void LogisticModel::grad_and_loss(const vector<double>& w, const DataSet& data, 
     }
     if (_l2 > MinDoubleValue)
     {
-        for (int i=0; i<grad.size(); ++i)
+        for (size_t i=0; i<grad.size(); ++i)
         {
             grad[i] += _l2*w[i];
             loss += 0.5*_l2*w[i]*w[i];
@@ -137,7 +137,7 @@ double LogisticModel::predict(const Feature* sample)
 void LogisticModel::save_model(const char* model_file)
 {
     ofstream ofile(model_file);
-    for (int i=0; i<_w.size(); ++i)
+    for (size_t i=0; i<_w.size(); ++i)
     {
         ofile << _w[i] << std::endl;
     }

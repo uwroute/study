@@ -3,5 +3,7 @@ cc_library(
     srcs = [
         'owlqn.cpp'
     ],
-    incs = ['../']
+    incs = ['../'],
+    deps = ['//ML/Common:common'],
+    optimize = ['O3']
 )
