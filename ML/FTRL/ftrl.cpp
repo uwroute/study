@@ -123,7 +123,7 @@ void FTRL::load_model(const std::string& file)
     getline(infile, line);
     _lamda2 = atof(line.c_str());
     getline(infile, line);
-    int size = atoi(line.c_str());
+    // int size = atoi(line.c_str());
     // _w.reserve(size);
     // _z.reserve(size);
     // _n.reserve(size);

@@ -15,7 +15,7 @@ cc_binary(
 cc_binary(
     name = 'lr_predict',
     srcs = [
-        'lr_train.cpp',
+        'lr_predict.cpp',
         'logistic_model.cpp'
     ],
     incs = ['../../ThirdParty/gflags/include/',

@@ -1,11 +1,29 @@
 cc_binary(
-    name = 'ftrl',
+    name = 'ftrl_train',
     srcs = [
-        'FTRL_test.cpp',
-        'FTRL.cpp'
+        'ftrl_train.cpp',
+        'ftrl.cpp'
     ],
-    incs = ['../../ThirdParty/gflags/include/'],
+    incs = ['../../ThirdParty/gflags/include/',
+           '../'],
     deps = ['//ML/Common:common',
-            '//ThirdParty/gflags/lib:gflags'
+            '//ThirdParty/gflags/lib:gflags',
+            '//ML/data:data'
            ],
+    optimize = ['O3']
+)
+
+cc_binary(
+    name = 'ftrl_predict',
+    srcs = [
+        'ftrl_predict.cpp',
+        'ftrl.cpp'
+    ],
+    incs = ['../../ThirdParty/gflags/include/',
+           '../'],
+    deps = ['//ML/Common:common',
+            '//ThirdParty/gflags/lib:gflags',
+            '//ML/data:data'
+           ],
+    optimize = ['O3']
 )
