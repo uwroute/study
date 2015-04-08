@@ -2,7 +2,7 @@
 #
 # Author: route - uwnroute@126.com
 #
-# Last modified: Tue 07 Apr 2015 05:30:52 PM CST [10.146.36.174]
+# Last modified: Wed 08 Apr 2015 05:04:36 PM CST [10.146.36.174]
 #
 # Filename: logistic_model.h
 #

@@ -9,7 +9,7 @@ libopt.a : owlqn.o
 	ar r libopt.a owlqn.o
 
 owlqn.o : owlqn.cpp
-	g++ -g -c owlqn.cpp -O3 -I../
+	g++ -g -c owlqn.cpp -O3 -I../ -L../Common/ -lCommon
 
 .PHONY : clean
 clean : 

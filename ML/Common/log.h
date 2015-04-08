@@ -2,7 +2,7 @@
 #
 # Author: route - uwnroute@126.com
 #
-# Last modified: 2015-02-14 15:54
+# Last modified: Wed 08 Apr 2015 03:46:06 PM CST [10.146.36.174]
 #
 # Filename: log.h
 #
@@ -15,6 +15,8 @@
 #include <cstdio>
 #include <cstdlib>
 #include <stdint.h>
+#include <string>
+#include <ctime>
 
 enum LOG_LEVEL
 {
@@ -27,19 +29,21 @@ enum LOG_LEVEL
 
 extern uint32_t log_level;
 
+std::string cur_time();
+
 #define LOG_ERROR(fmt, ...) \
-	if (log_level <= ERROR) fprintf(stdout, "[ERROR] " fmt"\n", __VA_ARGS__)
+	if (log_level <= ERROR) fprintf(stdout, "[ERROR][%s] " fmt"\n", cur_time().c_str(), __VA_ARGS__)
 
 #define LOG_WARNING(fmt, ...) \
-	if (log_level <= WARNING) fprintf(stdout, "[WARNING] " fmt"\n", __VA_ARGS__)
+	if (log_level <= WARNING) fprintf(stdout, "[WARNING][%s] " fmt"\n", cur_time().c_str(), __VA_ARGS__)
 
 #define LOG_INFO(fmt, ...) \
-	if (log_level <= INFO) fprintf(stdout, "[INFO] " fmt"\n", __VA_ARGS__)
+	if (log_level <= INFO) fprintf(stdout, "[INFO][%s] " fmt"\n", cur_time().c_str(), __VA_ARGS__)
 
 #define LOG_DEBUG(fmt, ...) \
-	if (log_level <= DEBUG) fprintf(stdout, "[DEBUG] " fmt"\n", __VA_ARGS__)
+	if (log_level <= DEBUG) fprintf(stdout, "[DEBUG][%s] " fmt"\n", cur_time().c_str(), __VA_ARGS__)
 
 #define LOG_TRACE(fmt, ...) \
-	if (log_level <= TRACE) fprintf(stdout, "[TRACE] " fmt"\n", __VA_ARGS__)
+	if (log_level <= TRACE) fprintf(stdout, "[TRACE][%s] " fmt"\n", cur_time().c_str(), __VA_ARGS__)
 
 #endif  // _LOG_H_
