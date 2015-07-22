@@ -4,9 +4,10 @@ cc_binary(
         'SparseLR_test.cpp',
         'SparseBatchLR.cpp'
     ],
-    incs = ['../../ThirdParty/gflags/include/'],
-    deps = ['//ML/Common:common',
+    incs = ['../../../ThirdParty/gflags/include/',
+	   '../'],
+    deps = ['//study/ML/Common:common',
             '//ThirdParty/gflags/lib:gflags'
            ],
-    #optimize = ['O']
+    optimize = ['O3']
 )

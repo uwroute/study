@@ -5,7 +5,7 @@ cc_binary(
         'ftrl.cpp'
     ],
     incs = ['../../../ThirdParty/gflags/include/',
-           '../../'],
+           '../'],
     deps = ['//study/ML/Common:common',
             '//ThirdParty/gflags/lib:gflags',
             '//study/ML/data:data'
@@ -19,11 +19,11 @@ cc_binary(
         'ftrl_predict.cpp',
         'ftrl.cpp'
     ],
-    incs = ['../../ThirdParty/gflags/include/',
+    incs = ['../../../ThirdParty/gflags/include/',
            '../'],
-    deps = ['//ML/Common:common',
+    deps = ['//study/ML/Common:common',
             '//ThirdParty/gflags/lib:gflags',
-            '//ML/data:data'
+            '//study/ML/data:data'
            ],
     optimize = ['O3']
 )

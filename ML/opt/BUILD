@@ -4,6 +4,6 @@ cc_library(
         'owlqn.cpp'
     ],
     incs = ['../'],
-    deps = ['//ML/Common:common'],
+    deps = ['//study/ML/Common:common'],
     optimize = ['O3']
 )

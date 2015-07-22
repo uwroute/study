@@ -1,7 +1,7 @@
 #include "gflags/gflags.h"
 #include <string>
 #include "SparseBatchLR.h"
-#include "ML/Common/log.h"
+#include "Common/log.h"
 #include <ctime>
 
 // LR train params

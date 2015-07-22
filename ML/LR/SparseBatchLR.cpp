@@ -4,8 +4,8 @@
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
-#include "ML/Common/string_util.h"
-#include "ML/Common/log.h"
+#include "Common/string_util.h"
+#include "Common/log.h"
 
 const double SparseBatchLR::MIN_DOUBLE = 1.0e-10;
 // public interface

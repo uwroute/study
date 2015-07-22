@@ -8,7 +8,7 @@
 #include <string>
 #include <algorithm>
 #include <stdint.h>
-#include "ML/Common/log.h"
+#include "Common/log.h"
 
 typedef std::vector<double> DoubleDenseVec;
 typedef std::map<uint64_t, double> DoubleSparseVec;
