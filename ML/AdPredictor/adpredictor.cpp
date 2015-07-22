@@ -45,7 +45,7 @@ void AdPredictor::train(const Feature* sample, double label)
     }
     double total_mean=0.0, total_variance=0.0;
     active_mean_variance(sample, total_mean, total_variance);
-    double t = y*total_mean/sqrt(total_variance);
+    double t = label*total_mean/sqrt(total_variance);
     if (fabs(t) > 5.0)
     {
         t = t < 0 ? -5.0 : 5.0;
@@ -61,13 +61,13 @@ void AdPredictor::train(const Feature* sample, double label)
         double mean = _w_mean[sample->index];
         double variance = _w_variance[sample->index];
 
-        mean += y*sample->value*variance/sqrt(total_variance)*v;
+        mean += label*sample->value*variance/sqrt(total_variance)*v;
         variance *=  1 - sample->value*variance/total_variance*w;
 
-        double rectify_variance = _init_variance*variance/( (1-eps)*_init_variance + eps*variance );
-        double rectify_mean = rectify_variance*( (1-eps)*mean/variance + eps*_init_mean/_init_variance );
+        double rectify_variance = _init_variance*variance/( (1-_eps)*_init_variance + _eps*variance );
+        double rectify_mean = rectify_variance*( (1-_eps)*mean/variance + _eps*_init_mean/_init_variance );
 
-        _w_mean[sample->inedx] = rectify_mean;
+        _w_mean[sample->index] = rectify_mean;
         _w_variance[sample->index] = rectify_variance;
 
         sample++;
@@ -87,7 +87,7 @@ void AdPredictor::save_model(const std::string& file)
     out_file << _init_mean << std::endl;
     out_file << _init_variance<< std::endl;
     out_file << _w_mean.size() << std::endl;
-    for (DoubleHashMap::const_iterator iter = _w_mean.begin(); iter != _w_std.end(); ++iter)
+    for (DoubleHashMap::const_iterator iter = _w_mean.begin(); iter != _w_mean.end(); ++iter)
     {
         out_file << iter->first << "\t" 
             << _w_mean[iter->first] << "\t"
@@ -120,20 +120,20 @@ void AdPredictor::load_model(const std::string& file)
 void AdPredictor::active_mean_variance(const Feature* sample, double& total_mean, double& total_variance)
 {
     total_mean = 0.0;
-    total_std = 0.0;
+    total_variance = 0.0;
     while (sample->index != -1)
     {
         if (_w_mean.end() != _w_mean.find(sample->index))
         {
             total_mean += _w_mean[sample->index];
-            total_std += _w_std[sample->index]* _w_std[sample->index];
+            total_variance += _w_variance[sample->index];
         }
         else
         {
             total_mean += _init_mean;
-            total_std += _init_std*_init_std;
+            total_variance += _init_variance;
         }
-        total_std += _beta*_beta;
+        total_variance += _beta*_beta;
         sample++;
     }
 }
@@ -145,11 +145,12 @@ double AdPredictor::cumulative_probability(double  t, double mean, double varian
     {
         return m < 0 ? 0.0 : 1.0;
     }
-    return 0.5*(1 + erf( m / (sqrt(2*variance) ) );
+    return 0.5*(1 + erf( m / sqrt(2*variance) ) );
 }
 
 double AdPredictor::gauss_probability(double t, double mean, double variance)
 {
+    const double PI = 3.1415926;
     double m = (t - mean) / sqrt(variance);
     return exp(-m*m/2) / sqrt(2*PI*variance);
 }

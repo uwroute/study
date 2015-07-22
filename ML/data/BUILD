@@ -4,7 +4,7 @@ cc_library(
     'data.cpp',
     ],
     incs = ['../'],
-    deps = ['//ML/Common:common'],
+    deps = ['//study/ML/Common:common'],
     optimize = ['O3']
 )
 cc_binary(
@@ -13,9 +13,9 @@ cc_binary(
         'data_test.cpp',
         'data.cpp'
     ],
-    incs = ['../../ThirdParty/gflags/include/',
+    incs = ['../../../ThirdParty/gflags/include/',
            '../'],
-    deps = ['//ML/Common:common',
+    deps = ['//study/ML/Common:common',
             '//ThirdParty/gflags/lib:gflags'
            ],
     optimize = ['O3']

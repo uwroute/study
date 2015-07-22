@@ -36,11 +36,11 @@ public:
     void load_model(const std::string& file);
 public:
     void set_init_mean(double mean) {_init_mean=mean;}
-    void set_init_variance(double std) {_init_std=std;}
+    void set_init_variance(double variance) {_init_variance=variance;}
     void set_beta(double beta) {_beta=beta;}
-    void active_mean_variance(const Feature* sample, double& total_mean, double& total_std);
-    double cumulative_probability(double  t, double mean, double std);
-    double gauss_probability(double t, double mean, double std);
+    void active_mean_variance(const Feature* sample, double& total_mean, double& total_variance);
+    double cumulative_probability(double  t, double mean, double variance);
+    double gauss_probability(double t, double mean, double variance);
 private:
     DoubleHashMap _w_mean;
     DoubleHashMap _w_variance;

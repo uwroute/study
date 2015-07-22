@@ -4,8 +4,9 @@ cc_binary(
         'plsa_test.cpp',
         'plsa.cpp'
     ],
-    incs = ['../../ThirdParty/gflags/include/'],
-    deps = ['//ML/Common:common',
+    incs = ['../../../ThirdParty/gflags/include/',
+	    '../../'],
+    deps = ['//study/ML/Common:common',
             '//ThirdParty/gflags/lib:gflags'
            ],
 )

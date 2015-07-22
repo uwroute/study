@@ -4,11 +4,11 @@ cc_binary(
         'ftrl_train.cpp',
         'ftrl.cpp'
     ],
-    incs = ['../../ThirdParty/gflags/include/',
-           '../'],
-    deps = ['//ML/Common:common',
+    incs = ['../../../ThirdParty/gflags/include/',
+           '../../'],
+    deps = ['//study/ML/Common:common',
             '//ThirdParty/gflags/lib:gflags',
-            '//ML/data:data'
+            '//study/ML/data:data'
            ],
     optimize = ['O3']
 )
