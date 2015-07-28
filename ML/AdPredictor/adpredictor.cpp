@@ -45,6 +45,7 @@ void AdPredictor::train(const Feature* sample, double label)
     }
     double total_mean=0.0, total_variance=0.0;
     active_mean_variance(sample, total_mean, total_variance);
+    LOG_TRACE("total_mean : %lf, total_variance : %lf", total_mean, total_variance);
     double t = label*total_mean/sqrt(total_variance);
     if (fabs(t) > 5.0)
     {
@@ -52,7 +53,7 @@ void AdPredictor::train(const Feature* sample, double label)
     }
     double v = gauss_probability(t, 0.0, 1.0) / cumulative_probability(t, 0.0, 1.0);
     double w = v*(v + t);
-
+    LOG_TRACE("v : %lf, w : %lf", v, w);
     while (sample->index != -1)
     {
         CHECK_MAP(_w_mean, sample->index, _init_mean);
@@ -62,7 +63,7 @@ void AdPredictor::train(const Feature* sample, double label)
         double variance = _w_variance[sample->index];
 
         mean += label*sample->value*variance/sqrt(total_variance)*v;
-        variance *=  1 - sample->value*variance/total_variance*w;
+        variance *=  1 - fabs(sample->value)*variance/total_variance*w;
 
         double rectify_variance = _init_variance*variance/( (1-_eps)*_init_variance + _eps*variance );
         double rectify_mean = rectify_variance*( (1-_eps)*mean/variance + _eps*_init_mean/_init_variance );
@@ -70,6 +71,7 @@ void AdPredictor::train(const Feature* sample, double label)
         _w_mean[sample->index] = rectify_mean;
         _w_variance[sample->index] = rectify_variance;
 
+        LOG_TRACE("_w_mean : %lf, _w_variance : %lf", rectify_mean, rectify_variance);
         sample++;
     }
 }
@@ -91,7 +93,7 @@ void AdPredictor::save_model(const std::string& file)
     {
         out_file << iter->first << "\t" 
             << _w_mean[iter->first] << "\t"
-            << _w_variance[iter->first] << "\t";
+            << _w_variance[iter->first] << std::endl;
     }
 }
 
@@ -125,8 +127,8 @@ void AdPredictor::active_mean_variance(const Feature* sample, double& total_mean
     {
         if (_w_mean.end() != _w_mean.find(sample->index))
         {
-            total_mean += _w_mean[sample->index];
-            total_variance += _w_variance[sample->index];
+            total_mean += _w_mean[sample->index] * sample->value;
+            total_variance += _w_variance[sample->index] * fabs(sample->value);
         }
         else
         {

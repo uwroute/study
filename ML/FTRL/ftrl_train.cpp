@@ -14,6 +14,7 @@ DEFINE_double(alpha, 0.05, "lr alpha");
 DEFINE_double(beta, 1.0, "lr beta");
 DEFINE_int32(max_fea_num, 1000*10000, "fea num");
 DEFINE_int32(max_iter, 1, "max iter");
+DEFINE_double(sample_rate, 1.0, "sample rate");
 DEFINE_int32(log_level, 2, "LogLevel :"
     "0 : TRACE "
     "1 : DEBUG "
@@ -37,6 +38,7 @@ void train(const std::string& file, FTRL& model)
         LOG_ERROR("Load data file : %s failed!", file.c_str());
         return;
     }
+    srand( (unsigned)time( NULL ) );
     // samples
     std::string line;
     std::vector<Feature> sample;
@@ -54,6 +56,11 @@ void train(const std::string& file, FTRL& model)
         if (ret > 0)
         {
             sample.push_back(end_fea);
+            if (label < 0.5 && ( rand()*1.0/RAND_MAX > FLAGS_sample_rate) )
+            {
+                   getline(infile, line);
+                   continue;
+            }
             model.train(&(sample[0]), label);
         }
         getline(infile, line);
