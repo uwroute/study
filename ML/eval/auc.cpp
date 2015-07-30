@@ -72,7 +72,7 @@ double auc(std::vector<Elem>& res) {
 	LOG_INFO("POSITIVE : %d , NEGATIVE : %d, CORRECT : %lf", p, n, correct);
 	if (n == 0) return 1.0;
 	if (p == 0) return 0.0;
-	return correct*1.0/(p*n);
+	return correct*1.0/p/n;
 }
 
 }

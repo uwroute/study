@@ -10,7 +10,8 @@ cc_binary(
             '//ThirdParty/gflags/lib:gflags',
             '//study/ML/data:data'
            ],
-    optimize = ['O3']
+    optimize = ['O3'],
+    #cxxflags='-std=gnu++0x',
 )
 
 cc_binary(

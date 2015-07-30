@@ -15,6 +15,10 @@ DEFINE_double(beta, 1.0, "lr beta");
 DEFINE_int32(max_fea_num, 1000*10000, "fea num");
 DEFINE_int32(max_iter, 1, "max iter");
 DEFINE_double(sample_rate, 1.0, "sample rate");
+DEFINE_bool(use_bias,  true, "if use bias");
+DEFINE_bool(reg_bias, false, "if reg bias");
+DEFINE_double(bias, 1.0, "bias value");
+DEFINE_int32(line_step, 50000, "log line step");
 DEFINE_int32(log_level, 2, "LogLevel :"
     "0 : TRACE "
     "1 : DEBUG "
@@ -47,6 +51,8 @@ void train(const std::string& file, FTRL& model)
     end_fea.index = -1;
     end_fea.value = 0.0;
 
+    int line_count = 0;
+    time_t start = time(NULL);
     getline(infile, line);
     while (!infile.eof())
     {
@@ -62,6 +68,12 @@ void train(const std::string& file, FTRL& model)
                    continue;
             }
             model.train(&(sample[0]), label);
+            line_count ++;
+            if (line_count%FLAGS_line_step == 0)
+            {
+                time_t end = time(NULL);
+                LOG_INFO("Train Lines : %d cost %d ms", line_count, int(end-start));
+            }
         }
         getline(infile, line);
     }
@@ -74,7 +86,7 @@ int main(int argc, char** argv)
     google::ParseCommandLineFlags(&argc, &argv, true);
     log_level = FLAGS_log_level;
     ML::FTRL model;
-    model.init(FLAGS_alpha, FLAGS_beta, FLAGS_alpha, FLAGS_beta, FLAGS_max_fea_num);
+    model.init(FLAGS_alpha, FLAGS_beta, FLAGS_alpha, FLAGS_beta, FLAGS_max_fea_num, FLAGS_use_bias, FLAGS_reg_bias, FLAGS_bias);
     int32_t iter = 0;
     while (iter++ < FLAGS_max_iter)
     {

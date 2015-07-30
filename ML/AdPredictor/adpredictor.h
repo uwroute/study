@@ -17,6 +17,7 @@
 // #include <tr1/unordered_map>
 #include <string>
 #include <stdint.h>
+#include <unordered_map>
 #include "data/data.h"
 
 namespace ML
@@ -24,12 +25,12 @@ namespace ML
 // using std::tr1::unordered_map
 class AdPredictor {
 public:
-    // typedef unordered_map<uint64_t, double> DoubleHashMap;
-    typedef std::map<uint64_t, double> DoubleHashMap;
+    typedef std::unordered_map<uint64_t, double> DoubleHashMap;
+    //typedef std::map<uint64_t, double> DoubleHashMap;
 public:
-    AdPredictor() {}
+    AdPredictor() : _init_mean(0.0), _init_variance(1.0), _beta(1.0), _eps(0.0), _bias_mean(_init_mean), _bias_variance(_init_variance), _bias(1.0) {}
     ~AdPredictor(){}
-    void init(double mean, double variance, double beta, double eps, size_t max_fea_num = 1000*10000);
+    void init(double mean, double variance, double beta, double eps, size_t max_fea_num = 1000*10000, bool ues_bias=true, double bias=1.0);
     void train(const Feature* sample, double label);
     double predict(const Feature* sample);
     void save_model(const std::string& file);
@@ -48,6 +49,11 @@ private:
     double _init_variance;
     double _beta;
     double _eps;
+    //bias para
+    bool _USE_BIAS;
+    double _bias_mean;
+    double _bias_variance;
+    double _bias;
 };
 
 }
