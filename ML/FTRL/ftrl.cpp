@@ -28,7 +28,7 @@ void FTRL::init(double a, double b, double l1, double l2, size_t max_fea_num, bo
         map[key] = 0.0;             \
     }
 
-void FTRL::train(const Feature* sample, double label)
+void FTRL::train(const LongFeature* sample, double label)
 {
     if (label < 0.5)
     {
@@ -36,7 +36,7 @@ void FTRL::train(const Feature* sample, double label)
     }
     double h = predict(sample);
     double err = h-label;
-    while (sample->index != -1)
+    while (sample->index != (uint64_t)-1)
     {
         CHECK_MAP(_n, sample->index);
         CHECK_MAP(_z, sample->index);
@@ -95,10 +95,10 @@ void FTRL::train(const Feature* sample, double label)
     }
 }
 
-double FTRL::predict(const Feature* sample)
+double FTRL::predict(const LongFeature* sample)
 {
     double wx = 0.0;
-    while (sample->index != -1)
+    while (sample->index != (uint64_t)-1)
     {
         if (_w.end() != _w.find(sample->index))
         {

@@ -40,7 +40,7 @@ void AdPredictor::init(double mean, double variance, double beta, double eps, si
         map[key] = value;             \
     }
 
-void AdPredictor::train(const Feature* sample, double label)
+void AdPredictor::train(const LongFeature* sample, double label)
 {
     if (label < 0.5)
     {
@@ -57,7 +57,7 @@ void AdPredictor::train(const Feature* sample, double label)
     double v = gauss_probability(t, 0.0, 1.0) / cumulative_probability(t, 0.0, 1.0);
     double w = v*(v + t);
     LOG_TRACE("v : %lf, w : %lf", v, w);
-    while (sample->index != -1)
+    while (sample->index !=  (uint64_t)-1)
     {
         CHECK_MAP(_w_mean, sample->index, _init_mean);
         CHECK_MAP(_w_variance, sample->index, _init_variance);
@@ -74,7 +74,7 @@ void AdPredictor::train(const Feature* sample, double label)
         _w_mean[sample->index] = rectify_mean;
         _w_variance[sample->index] = rectify_variance;
 
-        LOG_TRACE("fea_index : %d,  mean : %lf, variance : %lf", sample->index, rectify_mean, rectify_variance);
+        LOG_TRACE("fea_index : %lu,  mean : %lf, variance : %lf", sample->index, rectify_mean, rectify_variance);
         sample++;
     }
     if (_USE_BIAS)
@@ -95,7 +95,7 @@ void AdPredictor::train(const Feature* sample, double label)
     }
 }
 
-double AdPredictor::predict(const Feature* sample)
+double AdPredictor::predict(const LongFeature* sample)
 {
     double total_mean=0.0, total_variance=0.0;
     active_mean_variance(sample, total_mean, total_variance);
@@ -152,11 +152,11 @@ void AdPredictor::load_model(const std::string& file)
     }
 }
 
-void AdPredictor::active_mean_variance(const Feature* sample, double& total_mean, double& total_variance)
+void AdPredictor::active_mean_variance(const LongFeature* sample, double& total_mean, double& total_variance)
 {
     total_mean = 0.0;
     total_variance = 0.0;
-    while (sample->index != -1)
+    while (sample->index != (uint64_t)-1)
     {
         if (_w_mean.end() != _w_mean.find(sample->index))
         {

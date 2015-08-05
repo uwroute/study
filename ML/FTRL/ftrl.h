@@ -19,8 +19,8 @@ public:
     FTRL() : _alpha(0.05), _beta(1.0), _lamda1(0.0), _lamda2(0.0),_USE_BIAS(true),_REG_BIAS(false),_w_bias(0),_z_bias(0.0),_n_bias(0.0),_bias(1.0) {}
     ~FTRL() {}
     void init(double a, double b, double l1, double l2, size_t max_fea_num = 1000*10000, bool use_bias = true, bool reg_bias = false, double bias = 1.0);
-    void train(const Feature* sample, double label);
-    double predict(const Feature* sample);
+    void train(const LongFeature* sample, double label);
+    double predict(const LongFeature* sample);
     void save_model(const std::string& file);
     void load_model(const std::string& file);
 public:

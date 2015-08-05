@@ -47,9 +47,9 @@ void train(const std::string& file, AdPredictor& model)
     srand( (unsigned)time( NULL ) );
     // samples
     std::string line;
-    std::vector<Feature> sample;
+    std::vector<LongFeature> sample;
     double label = 0.0;
-    Feature end_fea;
+    LongFeature end_fea;
     end_fea.index = -1;
     end_fea.value = 0.0;
 
@@ -60,7 +60,7 @@ void train(const std::string& file, AdPredictor& model)
     {
         sample.clear();
         label = 0.0;
-        int ret = toSample(line, sample, label);
+        uint64_t ret = toSample(line, sample, label);
         if (ret > 0)
         {
             sample.push_back(end_fea);

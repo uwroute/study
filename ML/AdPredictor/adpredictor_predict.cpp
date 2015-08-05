@@ -29,7 +29,7 @@ int main(int argc, char** argv)
     AdPredictor model;
     model.load_model(FLAGS_model_file);
 
-    std::vector<Feature> sample;
+    std::vector<LongFeature> sample;
     ifstream infile(FLAGS_test_file.c_str());
     if (!infile)
     {
@@ -46,14 +46,14 @@ int main(int argc, char** argv)
     std::string line;
     getline(infile, line);
     double label = 0.0;
-    Feature end_fea;
+    LongFeature end_fea;
     end_fea.index = -1;
     end_fea.value = 0.0;
     while (!infile.eof())
     {
         sample.clear();
         label = 0.0;
-        int ret = toSample(line, sample, label);
+        uint64_t ret = toSample(line, sample, label);
         if (ret > 0)
         {
             sample.push_back(end_fea);
