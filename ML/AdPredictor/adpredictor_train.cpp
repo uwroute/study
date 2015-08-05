@@ -10,6 +10,7 @@
 // FTRL train params
 DEFINE_string(train_file, "", "train data");
 DEFINE_string(model_file, "adpredictor.model", "model file");
+DEFINE_string(warm_model_file, "", "warm_model file");
 DEFINE_double(init_mean, 0.0, "init_mean");
 DEFINE_double(init_variance, 1.0, "init_variance");
 DEFINE_double(beta, 1.0, "beta");

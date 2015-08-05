@@ -86,7 +86,7 @@ int main(int argc, char** argv)
     google::ParseCommandLineFlags(&argc, &argv, true);
     log_level = FLAGS_log_level;
     ML::FTRL model;
-    model.init(FLAGS_alpha, FLAGS_beta, FLAGS_alpha, FLAGS_beta, FLAGS_max_fea_num, FLAGS_use_bias, FLAGS_reg_bias, FLAGS_bias);
+    model.init(FLAGS_alpha, FLAGS_beta, FLAGS_lamda1, FLAGS_lamda2, FLAGS_max_fea_num, FLAGS_use_bias, FLAGS_reg_bias, FLAGS_bias);
     int32_t iter = 0;
     while (iter++ < FLAGS_max_iter)
     {

@@ -38,6 +38,16 @@ void check(const Elem& e, int& n, int& p) {
 	}
 }
 
+double logistic_loss(Elem& e)
+{
+	if (e.y > 0.5) {
+		return -log(e.p);
+	}
+	else {
+		return -log(1-e.p);
+	}
+}
+
 double auc(std::vector<Elem>& res) {
 	if (res.size() <= 0)
 	{
@@ -99,15 +109,17 @@ int main(int argc, char** argv)
     Elem e;
     e.p = 0.0;
     e.y = 1.0;
+    double total_loss = 0;
     getline(infile, line);
     while (!infile.eof())
     {
     	sscanf(line.c_str(), "%lf %lf", &(e.y), &(e.p));
     	LOG_TRACE("Elem p : %lf, y : %lf", e.p, e.y);
     	res.push_back(e);
+    	total_loss += logistic_loss(e);
     	getline(infile, line);
     }
     LOG_TRACE("Res size : %lu", res.size());
-    printf("[%s]AUC = %lf\n", FLAGS_res_file.c_str(), auc(res));
+    printf("[%s]AUC = %.5lf, LOSS = %.3lf\n", FLAGS_res_file.c_str(), auc(res), total_loss);
     return 0;
 }

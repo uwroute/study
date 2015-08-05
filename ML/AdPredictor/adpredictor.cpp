@@ -66,7 +66,7 @@ void AdPredictor::train(const Feature* sample, double label)
         double variance = _w_variance[sample->index];
 
         mean += label*sample->value*variance/sqrt(total_variance)*v;
-        variance *=  1 - fabs(sample->value)*variance/total_variance*w;
+        variance *=  1 - sample->value*sample->value*variance/total_variance*w;
 
         double rectify_variance = _init_variance*variance/( (1-_eps)*_init_variance + _eps*variance );
         double rectify_mean = rectify_variance*( (1-_eps)*mean/variance + _eps*_init_mean/_init_variance );
@@ -107,6 +107,8 @@ void AdPredictor::save_model(const std::string& file)
     std::ofstream out_file(file.c_str());
     out_file << _init_mean << std::endl;
     out_file << _init_variance<< std::endl;
+    out_file << _beta << std::endl;
+    out_file << _eps << std::endl;
     out_file << _USE_BIAS << std::endl;
     out_file << _bias << "\t"
             << _bias_mean << "\t"
@@ -129,9 +131,13 @@ void AdPredictor::load_model(const std::string& file)
     _init_mean = atof(line.c_str());
     getline(infile, line);
     _init_variance = atof(line.c_str());
-    getline(infile, line);  // get fea size
-    sscanf(line.c_str(), "%lf\t%lf\t%lf", &_bias, &_bias_mean, &_bias_variance);
     getline(infile, line);
+    _beta = atof(line.c_str());
+    getline(infile, line);
+    _eps = atof(line.c_str());
+    getline(infile, line);  
+    sscanf(line.c_str(), "%lf\t%lf\t%lf", &_bias, &_bias_mean, &_bias_variance);
+    getline(infile, line); // get fea size
     int w_size = atoi(line.c_str());
     _w_mean.reserve(w_size);
     _w_variance.reserve(w_size);
@@ -155,7 +161,7 @@ void AdPredictor::active_mean_variance(const Feature* sample, double& total_mean
         if (_w_mean.end() != _w_mean.find(sample->index))
         {
             total_mean += _w_mean[sample->index] * sample->value;
-            total_variance += _w_variance[sample->index] * fabs(sample->value);
+            total_variance += _w_variance[sample->index] * sample->value*sample->value;
         }
         else
         {
@@ -167,7 +173,7 @@ void AdPredictor::active_mean_variance(const Feature* sample, double& total_mean
     if (_USE_BIAS)
     {
         total_mean += _bias_mean * _bias;
-        total_variance += _bias_variance * fabs(_bias);
+        total_variance += _bias_variance * _bias*_bias;
     }
     total_variance += _beta*_beta;
 }
