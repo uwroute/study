@@ -153,6 +153,7 @@ uint64_t toSample(const std::string& line, std::vector<LongFeature>& sample, dou
                 LOG_ERROR("Load Error Sample : Feature is too large [%s]", line.c_str());
                 return 0;
             }
+            fea.index--;
             sample.push_back(fea);
         }
         MAX_FEA_NUM = std::max(MAX_FEA_NUM, fea.index);
