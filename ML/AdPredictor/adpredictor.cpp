@@ -165,8 +165,8 @@ void AdPredictor::active_mean_variance(const LongFeature* sample, double& total_
         }
         else
         {
-            total_mean += _init_mean;
-            total_variance += _init_variance;
+            total_mean += _init_mean*sample->value;
+            total_variance += _init_variance*sample->value*sample->value;
         }
         sample++;
     }
