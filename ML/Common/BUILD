@@ -3,6 +3,11 @@ cc_library(
     srcs = [
         'string_util.cpp',
         'log.cpp',
+        'thread.cpp',
+        'lock.cpp',
+    ],
+    deps = [
+    	'#pthread'
     ],
     optimize = ['O3']
 )
