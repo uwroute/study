@@ -186,7 +186,16 @@ void MatchBox::train(const LongMatrixFeature* sample, double label) {
 	LOG_DEBUG("total_z : [%lf, %lf]", total_z.m, total_z.v);
 	LOG_DEBUG("_r : [%lf, %lf]", _r.m, _r.v);
 	// compute p(r') = (+->r')*P(r'>0)
-	Param r_post = truncatedGauss(_r, 0, 1000);
+	Param r_post;
+	if (label > 0.5)
+	{
+		r_post = truncatedGauss(_r, 0, 1000);
+	}
+	else
+	{
+		r_post = truncatedGauss(_r, -1000, 0);
+	}
+	
 	LOG_DEBUG("r_post : [%lf, %lf]", r_post.m, r_post.v);
 	// up passing
 	// compute (r'->+) = p(r')/(+->r')
