@@ -94,8 +94,8 @@ MatchBox::Param MatchBox::truncatedGauss(const Param& p, double a, double b) {
 	}
 	else if (norm_a < -10.0)
 	{
-		prob_b = 0.0;
-		cprob_b = 0.0;
+		prob_a = 0.0;
+		cprob_a = 0.0;
 		prob_b = gauss_probability(norm_b);
 		cprob_b = cumulative_probability(norm_b);
 	}
@@ -110,7 +110,7 @@ MatchBox::Param MatchBox::truncatedGauss(const Param& p, double a, double b) {
 	double total_prob = cprob_b - cprob_a;
 	double w_diff_prob = prob_a*norm_a - prob_b*norm_b;
 	double v = diff_prob/total_prob;
-	r.m = p.m + sqrt(p.v)*( (prob_b-prob_a)/total_prob);
+	r.m = p.m + sqrt(p.v)* v;
 	r.v = p.v*(1+w_diff_prob/total_prob - v*v);
 	return r;
 }
