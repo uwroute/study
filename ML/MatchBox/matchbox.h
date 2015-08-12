@@ -49,6 +49,7 @@ private:
 	Param multGauss(const Param& p1, const Param& p2);
 	Param addGauss(const Param& p1, const Param& p2);
 	Param decGauss(const Param& p1, const Param& p2);
+	Param truncatedGauss(const Param& p, double label);
 	Param truncatedGauss(const Param& p, double a, double b);
 	Param get_user_param(uint64_t idx, int k);
 	Param get_item_param(uint64_t idx, int k);

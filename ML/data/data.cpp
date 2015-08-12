@@ -271,7 +271,6 @@ uint64_t toSample(const std::string& line, std::vector<LongMatrixFeature>& sampl
                 return 0;
             }
             fea.index--;
-            fea.value = 1.0;
             sample.push_back(fea);
         }
         else {

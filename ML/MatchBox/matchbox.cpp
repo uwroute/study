@@ -77,6 +77,26 @@ MatchBox::Param MatchBox::decGauss(const Param& p1, const Param& p2) {
 	r.m = p1.m - p2.m;
 	return r;
 }
+
+MatchBox::Param MatchBox::truncatedGauss(const Param& p, double label) {
+	Param r;
+	if (label < 0.5)
+	{
+		label = -1.0;
+	}
+	double t = label*p.m/sqrt(p.v);
+	if (fabs(t) > 5.0)
+	{
+		t = (t>0) ? 5.0 : -5.0;
+	}
+	double v = gauss_probability(t)/cumulative_probability(t);
+	double w = v*(t+v);
+	LOG_DEBUG("v=%lf, w=%lf", v, w);
+	r.m = p.m + sqrt(p.v)*v*label;
+	r.v = p.v*(1-w);
+	return r;
+}
+
 MatchBox::Param MatchBox::truncatedGauss(const Param& p, double a, double b) {
 	Param r;
 	double norm_a = (a-p.m)/sqrt(p.v);
@@ -106,6 +126,7 @@ MatchBox::Param MatchBox::truncatedGauss(const Param& p, double a, double b) {
 		prob_b = gauss_probability(norm_b);
 		cprob_b = cumulative_probability(norm_b);
 	}
+	LOG_DEBUG("a=%lf, ca=%lf, b=%lf, cb=%lf", prob_a, cprob_a, prob_b, cprob_b);
 	double diff_prob = prob_b - prob_a;
 	double total_prob = cprob_b - cprob_a;
 	double w_diff_prob = prob_a*norm_a - prob_b*norm_b;
@@ -187,14 +208,15 @@ void MatchBox::train(const LongMatrixFeature* sample, double label) {
 	LOG_DEBUG("_r : [%lf, %lf]", _r.m, _r.v);
 	// compute p(r') = (+->r')*P(r'>0)
 	Param r_post;
-	if (label > 0.5)
+	r_post = truncatedGauss(_r, label);
+	/*if (label > 0.5)
 	{
 		r_post = truncatedGauss(_r, 0, 1000);
 	}
 	else
 	{
 		r_post = truncatedGauss(_r, -1000, 0);
-	}
+	}//*/
 	
 	LOG_DEBUG("r_post : [%lf, %lf]", r_post.m, r_post.v);
 	// up passing
