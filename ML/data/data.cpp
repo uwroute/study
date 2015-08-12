@@ -245,4 +245,40 @@ int load_data(const std::string& file, LongDataSet& data, double down_sample)
     infile.close();
     return 0;
 }
+
+uint64_t toSample(const std::string& line, std::vector<LongMatrixFeature>& sample, double& label)
+{
+    std::vector<std::string> vec;
+    splitString(line, vec, ' ');
+    uint64_t MAX_FEA_NUM = 0;
+    if (vec.size() <= 0 )
+    {
+        return 0;
+    }
+    label = atof(vec[0].c_str());
+    LongMatrixFeature fea;
+    for (size_t i=1; i<vec.size(); ++i)
+    {
+        fea.index = 0;
+        fea.value = 0.0;
+        fea.type = 0;
+        if (sscanf(vec[i].c_str(), "%lu:%lf:%d", &(fea.index), &(fea.value), &(fea.type)))
+        {
+            if (fea.index == (uint64_t)-1)
+            {
+                LOG_ERROR("Load Error Sample : Feature is too large [%s]", line.c_str());
+                return 0;
+            }
+            fea.index--;
+            sample.push_back(fea);
+        }
+        MAX_FEA_NUM = std::max(MAX_FEA_NUM, fea.index);
+    }
+    if (sample.size() == 0)
+    {
+        return 0;
+    }
+    return MAX_FEA_NUM;
+}
+
 }

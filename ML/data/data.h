@@ -56,10 +56,18 @@ struct LongDataSet
     LongDataSet():sample_fea_num(0),sample_num(0),max_fea_num(0){}
 };
 
+struct LongMatrixFeature
+{
+    uint64_t index; // max fea num : 2^64
+    double value;
+    int type; // 0:bias, 1:user, 2:item
+};
+
 int toSample(const std::string& line, std::vector<Feature>& sample, double& label);
 int load_data(const std::string& file, DataSet& data);
 uint64_t toSample(const std::string& line, std::vector<LongFeature>& sample, double& label);
 int load_data(const std::string& file, LongDataSet& data, double down_sample = 1.0);
+uint64_t toSample(const std::string& line, std::vector<LongMatrixFeature>& sample, double& label);
 
 }
 

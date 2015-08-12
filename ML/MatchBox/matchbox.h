@@ -20,44 +20,64 @@
 #include "data/data.h"
 
 namespace ML {
-
 class MatchBox {
 public:
-	typedef std::unordered_map<uint64_t, double> DoubleHashMap;
-	struct ParamMap {
-		DoubleHashMap mMap;
-		DoubleHashMap vMap;
-	};
 	struct Param
 	{
+	public:
 		double m;
 		double v;
+	public:
+		Param() :m(0.0), v(0.0) {}
+		Param(double tm, double tv) : m(tm), v(tv) {}
+		~Param() {}
+		void reset() {m=0.0; v=0.0;}
 	};
+	typedef std::unordered_map<uint64_t, Param> ParamMap;
 public:
-	void train(const LongFeature* sample, double label);
-    double predict(const LongFeature* sample);
-    void save_model(const std::string& file);
-    void load_model(const std::string& file);
+	MatchBox() : _k(0), _beta(1.0), _w_prior(0.0, 1.0), _bias(0.0, 1.0) {}
+	~MatchBox() {}
+	void init(int k, std::string prior_m, std::string prior_v, double _beta, int max_fea = 1000*1000);
+	void train(const LongMatrixFeature* sample, double label);
+	double predict(const LongMatrixFeature* sample);
+	void save_model(const std::string& file);
+	void load_model(const std::string& file);
+	double cumulative_probability(double  t, double mean=0.0, double variance=1.0);
+	double gauss_probability(double t, double mean=0.0, double variance=1.0);
 private:
-	void divGauss(const Param& p1, const Param& p2, Param& r);
-	void multGauss(const Param& p1, const Param& p2, Param& r);
-	void addGauss(const Param& p1, const Param& p2, Param& r);
-	void decGauss(const Param& p1, const Param& p2, Param& r);
-	void truncatedGauss(const Param& p, double a, double b, Param& r);
+	Param divGauss(const Param& p1, const Param& p2);
+	Param multGauss(const Param& p1, const Param& p2);
+	Param addGauss(const Param& p1, const Param& p2);
+	Param decGauss(const Param& p1, const Param& p2);
+	Param truncatedGauss(const Param& p, double a, double b);
+	Param get_user_param(uint64_t idx, int k);
+	Param get_item_param(uint64_t idx, int k);
+	Param get_w_param(uint64_t idx);
+	void set_user_param(uint64_t idx, int k, Param& p) {_user[k][idx] = p;}
+	void set_item_param(uint64_t idx, int k, Param& p) {_item[k][idx] = p;}
+	void set_w_param(uint64_t idx, Param& p) {_w[idx] = p;}
+	double square(double x) {return x*x;}
+	double second_moment(Param p) {return p.v + square(p.m);}
+	void clear_state();
+	void saveMap(std::ostream& out_file, ParamMap& map);
+	void loadMap(std::istream& infile, ParamMap& map);
 private:
-	// model param
 	int _k;
-	std::vector<ParamMap> _user;
-	std::vector<ParamMap> _item;
-	ParamMap _w;
-	// train param
-	std::vector<Param> _prior;
 	double _beta;
+	// train param
+	std::vector<Param> _user_prior;
+	std::vector<Param> _item_prior;
+	Param _w_prior;
 	std::vector<Param> _s;
 	std::vector<Param> _t;
 	std::vector<Param> _z;
-	double _b;
-	double _r;
+	Param _b;
+	Param _r;
+	// model param
+	std::vector<ParamMap> _user;
+	std::vector<ParamMap> _item;
+	ParamMap _w;
+	Param _bias;
 };
 
 }
