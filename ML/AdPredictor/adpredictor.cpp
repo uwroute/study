@@ -195,4 +195,25 @@ double AdPredictor::gauss_probability(double t, double mean, double variance)
     return exp(-m*m/2) / sqrt(2*PI*variance);
 }
 
+void AdPredictor::merge(AdPredictor& other) {
+    for (DoubleHashMap::const_iterator iter = other._w_mean.begin(); iter != other._w_mean.end(); ++iter)
+    {
+        uint64_t fea_idx = iter->first;
+        double other_m = iter->second;
+        double other_v = other._w_variance[0];
+        double cur_m = _init_mean;
+        double cur_v = _init_variance;
+        if (_w_mean.find(fea_idx) != _w_mean.end())
+        {
+            cur_m = _w_mean[fea_idx];
+            cur_v = _w_variance[fea_idx];
+        }
+        double new_v = _init_variance/(_init_variance - other_v) * other_v;
+        new_v = cur_v/(cur_v+new_v)*new_v;
+        double new_w = new_v/cur_v*cur_m + new_v/other_v*other_m - new_v/_init_variance * _init_mean;
+        _w_mean[fea_idx] = new_w;
+        _w_variance[fea_idx] = new_v;
+    }
+}
+
 }

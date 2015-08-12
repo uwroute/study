@@ -165,8 +165,10 @@ uint64_t toSample(const std::string& line, std::vector<LongFeature>& sample, dou
     return MAX_FEA_NUM;
 }
 
-int load_data(const std::string& file, LongDataSet& data)
+int load_data(const std::string& file, LongDataSet& data, double down_sample)
 {
+    unsigned seed = (unsigned)time( NULL );
+    srand(seed);
     ifstream infile(file.c_str());
     if (!infile)
     {
@@ -184,6 +186,11 @@ int load_data(const std::string& file, LongDataSet& data)
         uint64_t ret = toSample(line, sample, label);
         if (ret > 0)
         {
+            if (label < 0.5 && ( rand()*1.0/RAND_MAX > down_sample) )
+            {
+                   getline(infile, line);
+                   continue;
+            }
             data.sample_fea_num += sample.size();
             data.sample_fea_num += 1;
             data.sample_num += 1;
@@ -196,6 +203,7 @@ int load_data(const std::string& file, LongDataSet& data)
     LOG_INFO("Compute Space : Max Fea Num = %lu", data.max_fea_num);
     infile.close();
     // load data
+    srand(seed);
     data.samples.reserve(data.sample_fea_num);
     data.sample_idx.reserve(data.sample_num);
     data.labels.reserve(data.sample_num);
@@ -214,7 +222,12 @@ int load_data(const std::string& file, LongDataSet& data)
         sample.clear();
         uint64_t ret = toSample(line, sample, label);
         if (ret > 0)
-        {
+        {   
+            if (label < 0.5 && ( rand()*1.0/RAND_MAX > down_sample) )
+            {
+                   getline(infile, line);
+                   continue;
+            }
             data.sample_idx.push_back(data.samples.size());
             data.samples.insert(data.samples.end(), sample.begin(), sample.end());
             data.samples.push_back(end_fea);
@@ -224,6 +237,8 @@ int load_data(const std::string& file, LongDataSet& data)
         getline(infile, line);
     }
     data.max_fea_num ++;
+    data.sample_fea_num = data.samples.size();
+    data.sample_num = data.labels.size();
     LOG_INFO("Load Data : Sample Fea Num = %lu", data.samples.size());
     LOG_INFO("Load Data : Sample Num = %lu", data.labels.size());
     LOG_INFO("Load Data : Max Fea Num = %lu", data.max_fea_num);

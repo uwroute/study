@@ -59,7 +59,7 @@ struct LongDataSet
 int toSample(const std::string& line, std::vector<Feature>& sample, double& label);
 int load_data(const std::string& file, DataSet& data);
 uint64_t toSample(const std::string& line, std::vector<LongFeature>& sample, double& label);
-int load_data(const std::string& file, LongDataSet& data);
+int load_data(const std::string& file, LongDataSet& data, double down_sample = 1.0);
 
 }
 

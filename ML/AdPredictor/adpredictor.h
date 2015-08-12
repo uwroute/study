@@ -42,6 +42,7 @@ public:
     void active_mean_variance(const LongFeature* sample, double& total_mean, double& total_variance);
     double cumulative_probability(double  t, double mean, double variance);
     double gauss_probability(double t, double mean, double variance);
+    void merge(AdPredictor& other);
 private:
     DoubleHashMap _w_mean;
     DoubleHashMap _w_variance;

@@ -13,8 +13,10 @@
 #define _MESSAGE_QUEUE_H_
 
 #include "lock.h"
-
-template class MessageQueue<T> {
+namespace Common
+{
+template<class T>
+class MessageQueue {
 public:
     T pop() {
         Lock lock(Mutex(_m_mutex));
@@ -33,5 +35,6 @@ private:
     pthread_mutex_t _m_mutex;
     std::deque<T> _queue;
 };
+}
 
 #endif
