@@ -50,6 +50,7 @@ void MatchBox::init(int k, std::string prior_m, std::string prior_v, double beta
 		_item_prior[i].m = atof(prior_m_str[2].c_str());
 		_item_prior[i].v = atof(prior_v_str[2].c_str());
 	}
+	LOG_INFO("%s", "Init MatchBox Successful!");
 }
 
 MatchBox::Param MatchBox::divGauss(const Param& p1, const Param& p2) {
@@ -135,6 +136,7 @@ void MatchBox::train(const LongMatrixFeature* sample, double label) {
 	clear_state();
 	// down passing
 	// compute (sk->*), (tk->*), (b->+)
+	const LongMatrixFeature* start = sample;
 	while (sample->index != (uint64_t)-1)
 	{
 		if (sample->type & 2)
@@ -144,7 +146,7 @@ void MatchBox::train(const LongMatrixFeature* sample, double label) {
 			p.v  *= sample->value*sample->value;
 			_b = addGauss(_b, p);
 		}
-		else if ( (sample->type & 1) == 0)
+		if ( (sample->type & 1) == 0)
 		{
 			for (int i=0; i<_k; ++i)
 			{
@@ -164,6 +166,8 @@ void MatchBox::train(const LongMatrixFeature* sample, double label) {
 				_t[i] = addGauss(_t[i], p);
 			}
 		}
+		else {}
+		sample++;
 	}
 	_b = addGauss(_b, _bias);
 	// compute (*->zk) = (zk->+)
@@ -179,8 +183,11 @@ void MatchBox::train(const LongMatrixFeature* sample, double label) {
 	_r = addGauss(_r, _b);
 	// compute (+->r')
 	_r.v += _beta*_beta;
+	LOG_DEBUG("total_z : [%lf, %lf]", total_z.m, total_z.v);
+	LOG_DEBUG("_r : [%lf, %lf]", _r.m, _r.v);
 	// compute p(r') = (+->r')*P(r'>0)
 	Param r_post = truncatedGauss(_r, 0, 1000);
+	LOG_DEBUG("r_post : [%lf, %lf]", r_post.m, r_post.v);
 	// up passing
 	// compute (r'->+) = p(r')/(+->r')
 	_r = divGauss(r_post, _r);
@@ -217,6 +224,7 @@ void MatchBox::train(const LongMatrixFeature* sample, double label) {
 	Up_bias.m = _b.m + _bias.m;
 	Up_bias.v = _b.v - _bias.v;
 	_bias = multGauss(_bias,  Up_bias);
+	sample = start;
 	while (sample->index != (uint64_t)-1)
 	{
 		if (sample->type & 2)
@@ -230,7 +238,7 @@ void MatchBox::train(const LongMatrixFeature* sample, double label) {
 			p = multGauss(Up_w, p);
 			set_w_param(sample->index, p);
 		}
-		else if ( (sample->type & 1)== 0)
+		if ( (sample->type & 1)== 0)
 		{
 			for (int i=0; i<_k; ++i)
 			{
@@ -254,6 +262,8 @@ void MatchBox::train(const LongMatrixFeature* sample, double label) {
 				set_item_param(sample->index, i, p);
 			}
 		}
+		else {}
+		sample++;
 	}
 }
 
@@ -270,7 +280,7 @@ double MatchBox::predict(const LongMatrixFeature* sample) {
 			p.v  *= sample->value*sample->value;
 			_b = addGauss(_b, p);
 		}
-		else if ( (sample->type & 1)== 0)
+		if ( (sample->type & 1)== 0)
 		{
 			for (int i=0; i<_k; ++i)
 			{
@@ -290,6 +300,8 @@ double MatchBox::predict(const LongMatrixFeature* sample) {
 				_t[i] = addGauss(_t[i], p);
 			}
 		}
+		else {}
+		sample++;
 	}
 	_b = addGauss(_b, _bias);
 	// compute (*->zk) = (zk->+)

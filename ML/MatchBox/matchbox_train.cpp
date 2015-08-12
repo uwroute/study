@@ -101,10 +101,14 @@ int main(int argc, char** argv)
     ML::MatchBox model;
     model.init(FLAGS_k, FLAGS_prior_mean, FLAGS_prior_variance,  FLAGS_beta, FLAGS_max_fea_num);
     int32_t iter = 0;
+    LOG_INFO("%s", "Train MatchBox model start!");
     while (iter++ < FLAGS_max_iter)
     {
         train(FLAGS_train_file, model);
     }
+    LOG_INFO("%s", "Train MatchBox model end!");
+    LOG_INFO("%s", "Save MatchBox model start!");
     model.save_model(FLAGS_model_file);
+    LOG_INFO("%s", "Save MatchBox model end!");
     return 0;
 }

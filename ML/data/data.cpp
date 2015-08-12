@@ -257,11 +257,12 @@ uint64_t toSample(const std::string& line, std::vector<LongMatrixFeature>& sampl
     }
     label = atof(vec[0].c_str());
     LongMatrixFeature fea;
+    LOG_TRACE("Read A Sample : [%s]", line.c_str());
     for (size_t i=1; i<vec.size(); ++i)
     {
         fea.index = 0;
         fea.value = 0.0;
-        fea.type = 0;
+        fea.type = 2;
         if (sscanf(vec[i].c_str(), "%lu:%lf:%d", &(fea.index), &(fea.value), &(fea.type)))
         {
             if (fea.index == (uint64_t)-1)
@@ -270,8 +271,13 @@ uint64_t toSample(const std::string& line, std::vector<LongMatrixFeature>& sampl
                 return 0;
             }
             fea.index--;
+            fea.value = 1.0;
             sample.push_back(fea);
         }
+        else {
+            LOG_ERROR("Load Error Sample : parse failed! [%s]", line.c_str());
+        }
+        LOG_TRACE("Parse Sample : [idx=%lu, val=%lf, type=%d]", fea.index, fea.value, fea.type);
         MAX_FEA_NUM = std::max(MAX_FEA_NUM, fea.index);
     }
     if (sample.size() == 0)
