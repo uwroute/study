@@ -43,12 +43,13 @@ void MatchBox::init(int k, std::string prior_m, std::string prior_v, double beta
 	Common::splitString(prior_v, prior_v_str, ',');
 	_w_prior.m = atof(prior_m_str[0].c_str());
 	_w_prior.v = atof(prior_v_str[0].c_str());
-	for (int i=1; i<=_k; ++i)
+	for (int i=0; i<_k; ++i)
 	{
 		_user_prior[i].m = atof(prior_m_str[1].c_str());
 		_user_prior[i].v = atof(prior_v_str[1].c_str());
 		_item_prior[i].m = atof(prior_m_str[2].c_str());
 		_item_prior[i].v = atof(prior_v_str[2].c_str());
+		LOG_DEBUG("user [%lf , %lf], item [%lf, %lf]", _user_prior[i].m, _user_prior[i].v, _item_prior[i].m, _item_prior[i].v);
 	}
 	LOG_INFO("%s", "Init MatchBox Successful!");
 }
@@ -453,14 +454,18 @@ MatchBox::Param MatchBox::get_user_param(uint64_t idx, int k) {
 	{
 		return _user[k][idx];
 	}
-	return _user_prior[k];
+	Param res = _user_prior[k];
+	res.m = gaussrand()*_user_prior[k].v + _user_prior[k].m;
+	return res;
 }
 MatchBox::Param MatchBox::get_item_param(uint64_t idx, int k) {
 	if (_item[k].find(idx) != _item[k].end())
 	{
 		return _item[k][idx];
 	}
-	return _item_prior[k];
+	Param res = _item_prior[k];
+	res.m = sqrt(_item_prior[k].v) * gaussrand() + _item_prior[k].m;
+	return res;
 }
 
 MatchBox::Param MatchBox::get_w_param(uint64_t idx) {

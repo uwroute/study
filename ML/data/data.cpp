@@ -271,6 +271,10 @@ uint64_t toSample(const std::string& line, std::vector<LongMatrixFeature>& sampl
                 return 0;
             }
             fea.index--;
+            if (fea.index < 7)
+            {
+                fea.type = 3;
+            }
             sample.push_back(fea);
         }
         else {
