@@ -32,7 +32,7 @@ public:
     ~AdPredictor(){}
     void init(double mean, double variance, double beta, double eps, size_t max_fea_num = 1000*10000, bool ues_bias=true, double bias=1.0);
     void train(const LongFeature* sample, double label);
-    double predict(const LongFeature* sample);
+    double predict(const LongFeature* sample, bool useEE = false);
     void save_model(const std::string& file);
     void load_model(const std::string& file);
 public:
@@ -40,12 +40,22 @@ public:
     void set_init_variance(double variance) {_init_variance=variance;}
     void set_beta(double beta) {_beta=beta;}
     void active_mean_variance(const LongFeature* sample, double& total_mean, double& total_variance);
+    void active_mean_variance_withEE(const LongFeature* sample, double& total_mean, double& total_variance);
     double cumulative_probability(double  t, double mean, double variance);
     double gauss_probability(double t, double mean, double variance);
+    double gaussrand();
+public:
+    // for Parallel
     void merge(AdPredictor& other);
+    void copy(AdPredictor& other);
+    void update_message(AdPredictor& other);
+    void compute_message(const LongFeature* sample, double label);
+    void clear_message();
 private:
     DoubleHashMap _w_mean;
     DoubleHashMap _w_variance;
+    DoubleHashMap _w_mean_message;
+    DoubleHashMap _w_variance_message;
     double _init_mean;
     double _init_variance;
     double _beta;
@@ -54,6 +64,8 @@ private:
     bool _USE_BIAS;
     double _bias_mean;
     double _bias_variance;
+    double _bias_mean_message;
+    double _bias_variance_message;
     double _bias;
 };
 

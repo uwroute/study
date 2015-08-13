@@ -11,6 +11,8 @@
 =============================================================================*/
 
 #include "thread.h"
+#include "log.h"
+
 namespace Common
 {
 void* Thread::static_run(void* arg) {
@@ -21,7 +23,7 @@ void* Thread::static_run(void* arg) {
 
 void* Thread::internal_run() {
        run();
-       pthread_exit(NULL);
+       // pthread_exit(NULL);
        return NULL;
 }
 
@@ -31,6 +33,7 @@ int Thread::start() {
 
 void Thread::join() {
 	if (_tid > 0) {
+		LOG_DEBUG("tid : %lu", _tid);
 		pthread_join(_tid, NULL);
 	}
 }

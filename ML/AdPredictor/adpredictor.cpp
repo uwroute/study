@@ -95,12 +95,18 @@ void AdPredictor::train(const LongFeature* sample, double label)
     }
 }
 
-double AdPredictor::predict(const LongFeature* sample)
+double AdPredictor::predict(const LongFeature* sample, bool useEE)
 {
     double total_mean=0.0, total_variance=0.0;
-    active_mean_variance(sample, total_mean, total_variance);
+    if (useEE) {
+        active_mean_variance_withEE(sample, total_mean, total_variance);
+    }
+    else {
+        active_mean_variance(sample, total_mean, total_variance);
+    }
     return cumulative_probability(total_mean/sqrt(total_variance), 0.0, 1.0);
 }
+
 
 void AdPredictor::save_model(const std::string& file)
 {
@@ -178,6 +184,29 @@ void AdPredictor::active_mean_variance(const LongFeature* sample, double& total_
     total_variance += _beta*_beta;
 }
 
+void AdPredictor::active_mean_variance_withEE(const LongFeature* sample, double& total_mean, double& total_variance)
+{
+    total_mean = 0.0;
+    total_variance = 0.0;
+    while (sample->index != (uint64_t)-1)
+    {
+        if (_w_mean.end() != _w_mean.find(sample->index))
+        {
+            total_mean += (_w_variance[sample->index] * gaussrand() + _w_mean[sample->index] )* sample->value;
+        }
+        else
+        {
+            total_mean += (_init_variance * gaussrand() + _init_mean )* sample->value;
+        }
+        sample++;
+    }
+    if (_USE_BIAS)
+    {
+        total_mean += (_bias_variance * gaussrand() + _bias_mean )* _bias;
+    }
+    total_variance += _beta*_beta;
+}
+
 double AdPredictor::cumulative_probability(double  t, double mean, double variance)
 {
     double m = (t - mean);
@@ -200,7 +229,7 @@ void AdPredictor::merge(AdPredictor& other) {
     {
         uint64_t fea_idx = iter->first;
         double other_m = iter->second;
-        double other_v = other._w_variance[0];
+        double other_v = other._w_variance[fea_idx];
         double cur_m = _init_mean;
         double cur_v = _init_variance;
         if (_w_mean.find(fea_idx) != _w_mean.end())
@@ -214,6 +243,136 @@ void AdPredictor::merge(AdPredictor& other) {
         _w_mean[fea_idx] = new_w;
         _w_variance[fea_idx] = new_v;
     }
+    double other_m = other._bias_mean;
+    double other_v = other._bias_variance;
+    double cur_m = _bias_mean;
+    double cur_v = _bias_variance;
+    double new_v = _init_variance/(_init_variance - other_v) * other_v;
+    new_v = cur_v/(cur_v+new_v)*new_v;
+    double new_w = new_v/cur_v*cur_m + new_v/other_v*other_m - new_v/_init_variance * _init_mean;
+    _bias_mean = new_w;
+    _bias_variance = new_v;
 }
 
+void AdPredictor::copy(AdPredictor& other) {
+    for (DoubleHashMap::const_iterator iter = other._w_mean.begin(); iter != other._w_mean.end(); ++iter)
+    {
+        uint64_t fea_idx = iter->first;
+        double other_m = iter->second;
+        double other_v = other._w_variance[fea_idx];
+        _w_mean[fea_idx] = other_m;
+        _w_variance[fea_idx] = other_v;
+    }
+    _bias_mean = other._bias_mean;
+    _bias_variance = other._bias_variance;
+}
+
+double AdPredictor::gaussrand()
+{
+    static double V1, V2, S;
+    static int phase = 0;
+    double X;
+    if ( phase == 0 ) {
+        do {
+            double U1 = (double)rand() / RAND_MAX;
+            double U2 = (double)rand() / RAND_MAX;
+            V1 = 2 * U1 - 1;
+            V2 = 2 * U2 - 1;
+            S = V1 * V1 + V2 * V2;
+        } while((S >= 1) || (fabs(S)  < 1e-10));
+        X = V1 * sqrt(-2 * log(S) / S);
+    }
+    else
+    {
+        X = V2 * sqrt(-2 * log(S) / S);
+    }
+    phase = 1 - phase;
+    return X;
+}
+
+void AdPredictor::update_message(AdPredictor& other)
+{
+    for (DoubleHashMap::const_iterator iter = other._w_mean_message.begin(); iter != other._w_mean_message.end(); ++iter)
+    {
+        uint64_t fea_idx = iter->first;
+        double message_m = iter->second;
+        double message_v = other._w_variance_message[fea_idx];
+        double cur_m = _init_mean;
+        double cur_v = _init_variance;
+        if (_w_mean.find(fea_idx) != _w_mean.end())
+        {
+            cur_m = _w_mean[fea_idx];
+            cur_v = _w_variance[fea_idx];
+        }
+        double new_v = cur_v/(1.0 + message_v*cur_v);
+        double new_w = new_v/cur_v*cur_m + new_v*message_m;
+        _w_mean[fea_idx] = new_w;
+        _w_variance[fea_idx] = new_v;
+        LOG_TRACE("update_message : fea_index : %lu,  mean : %lf, variance : %lf", fea_idx, new_w, new_v);
+    }
+    double message_m = other._bias_mean_message;
+    double message_v = other._bias_variance_message;
+    double cur_m = _bias_mean;
+    double cur_v = _bias_variance;
+    double new_v = cur_v/(1.0 + message_v*cur_v);
+    double new_w = new_v/cur_v*cur_m + new_v*message_m;
+    _bias_mean = new_w;
+    _bias_variance = new_v;
+}
+void AdPredictor::compute_message(const LongFeature* sample, double label)
+{
+    if (label < 0.5)
+    {
+        label = -1.0;
+    }
+    double total_mean=0.0, total_variance=0.0;
+    active_mean_variance(sample, total_mean, total_variance);
+    LOG_TRACE("total_mean : %lf, total_variance : %lf", total_mean, total_variance);
+    double t = label*total_mean/sqrt(total_variance);
+    if (fabs(t) > 5.0)
+    {
+        t = t < 0 ? -5.0 : 5.0;
+    }
+    double v = gauss_probability(t, 0.0, 1.0) / cumulative_probability(t, 0.0, 1.0);
+    double w = v*(v + t);
+    LOG_TRACE("v : %lf, w : %lf", v, w);
+    while (sample->index !=  (uint64_t)-1)
+    {
+        CHECK_MAP(_w_mean, sample->index, _init_mean);
+        CHECK_MAP(_w_variance, sample->index, _init_variance);
+
+        double mean = _w_mean[sample->index];
+        double variance = _w_variance[sample->index];
+
+        mean += label*sample->value*variance/sqrt(total_variance)*v;
+        variance *=  1 - sample->value*sample->value*variance/total_variance*w;
+
+        _w_variance_message[sample->index] = (_w_variance[sample->index] - variance)/(variance*_w_variance[sample->index]);
+        _w_mean_message[sample->index] = mean/variance - _w_mean[sample->index]/_w_variance[sample->index];
+
+        LOG_TRACE("fea_index : %lu,  mean : %lf, variance : %lf", sample->index, mean, variance);
+        LOG_TRACE("fea_index : %lu,  mean_msg : %lf, variance_msg : %lf", sample->index, _w_mean_message[sample->index], _w_variance_message[sample->index]);
+        sample++;
+    }
+    if (_USE_BIAS)
+    {
+        double mean = _bias_mean;
+        double variance = _bias_variance;
+
+        mean += label*_bias*variance/sqrt(total_variance)*v;
+        variance *=  1 - fabs(_bias)*variance/total_variance*w;
+
+        _bias_mean_message = mean/variance - _bias_mean/_bias_variance;
+        _bias_variance_message= (_bias_variance - variance)/(variance*_bias_variance);
+        
+        LOG_TRACE("bias , mean_msg : %lf,  variance_msg : %lf", _bias_mean_message, _bias_variance_message);
+    }
+}
+void AdPredictor::clear_message()
+{
+    _w_mean_message.clear();
+    _w_variance_message.clear();
+    _bias_mean_message = 0.0;
+    _bias_variance_message = 0.0;
+}
 }

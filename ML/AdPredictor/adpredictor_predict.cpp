@@ -11,6 +11,7 @@ DEFINE_string(model_file, "adpredictor.model", "model file");
 DEFINE_string(test_file, "", "test file");
 DEFINE_string(result_file, "", "test result file");
 DEFINE_bool(dynamic,  false, "if dynamic predictor");
+DEFINE_bool(use_ee,  false, "if use ee");
 DEFINE_double(sample_rate, 1.0, "sample rate");
 DEFINE_int32(log_level, 2, "LogLevel :"
     "0 : TRACE "
@@ -30,6 +31,7 @@ int main(int argc, char** argv)
 
     AdPredictor model;
     model.load_model(FLAGS_model_file);
+    LOG_DEBUG("load model %s successful!", FLAGS_model_file.c_str());
 
     srand( (unsigned)time( NULL ) );
 
@@ -61,7 +63,7 @@ int main(int argc, char** argv)
         if (ret > 0)
         {
             sample.push_back(end_fea);
-            double pre_value = model.predict(&(sample[0]));
+            double pre_value = model.predict(&(sample[0]), FLAGS_use_ee);
             if (FLAGS_dynamic)
             {
                 if (label > 0.5 || (label < 0.5 && ( rand()*1.0/RAND_MAX < FLAGS_sample_rate) ) )

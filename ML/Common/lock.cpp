@@ -13,22 +13,22 @@
 
 namespace Common
 {
-Mutex::Mutex(pthread_mutex_t m) : _m_mutex(m) {
-	pthread_mutex_init(&_m_mutex, NULL);
+Mutex::Mutex(pthread_mutex_t& m) : _p_m_mutex(&m) {
+	pthread_mutex_init(_p_m_mutex, NULL);
 }
 Mutex::~Mutex() {
-	pthread_mutex_destroy(&_m_mutex);
+	pthread_mutex_destroy(_p_m_mutex);
 }
 void Mutex::lock() { 
-	pthread_mutex_lock(&_m_mutex);
+	pthread_mutex_lock(_p_m_mutex);
 }
 void Mutex::unlock() { 
-	pthread_mutex_unlock(&_m_mutex);
+	pthread_mutex_unlock(_p_m_mutex);
 }
-Lock::Lock(Mutex& m) : _mutex(m) {
-	_mutex.lock();
+Lock::Lock(Mutex& m) : _p_mutex(&m) {
+	_p_mutex->lock();
 }
 Lock::~Lock() {
-	_mutex.unlock();
+	_p_mutex->unlock();
 }
 }

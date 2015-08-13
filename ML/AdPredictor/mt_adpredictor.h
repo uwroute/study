@@ -34,11 +34,15 @@ struct Sample
 };
 
 struct ThreadData {
-    ThreadData() : model(NULL), queue(NULL), file("") {}
+    ThreadData() : model(NULL), queue(NULL), file(""),minBatch(0) {}
     ~ThreadData() {model=NULL; queue=NULL;}
+    void synchroModel();
     AdPredictor* model;
+    AdPredictor* primary_model;
     Common::MessageQueue<Sample>* queue;
+    Common::Mutex* mutex;
     std::string file;
+    int minBatch;
 };
 
 class AdPredictorThread : public Common::Thread {
@@ -55,9 +59,10 @@ class ParallelAdPredictor {
 public:
     typedef std::unordered_map<uint64_t, double> DoubleHashMap;
 public:
-    explicit ParallelAdPredictor(int tn) : _thread_num(tn), _slave_models(_thread_num), _queues(_thread_num), _threads(_thread_num) {}
+    explicit ParallelAdPredictor(int tn) : _thread_num(tn), _mini_batch(0),_slave_models(_thread_num), 
+    _queues(_thread_num), _threads(_thread_num), _mutex(_m_mutex), _train_count(0) {}
     ~ParallelAdPredictor() {}
-    void init(double mean, double variance, double beta, double eps, size_t max_fea_num = 1000*10000, bool ues_bias=true, double bias=1.0);
+    void init(double mean, double variance, double beta, double eps, int mini_batch, size_t max_fea_num = 1000*10000, bool ues_bias=true, double bias=1.0);
     void train(LongFeature* sample, double label);
     double predict(const LongFeature* sample);
     void join();
@@ -67,9 +72,14 @@ public:
 private:
     AdPredictor _primary_model;
     int _thread_num;
+    int _mini_batch;
     std::vector<AdPredictor> _slave_models;
     std::vector<Common::MessageQueue<Sample> >_queues;
     std::vector<AdPredictorThread> _threads;
+private:
+    pthread_mutex_t _m_mutex;
+    Common::Mutex _mutex;
+    int _train_count;
 };
 
 }

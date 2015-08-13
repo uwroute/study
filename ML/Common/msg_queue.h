@@ -18,22 +18,27 @@ namespace Common
 template<class T>
 class MessageQueue {
 public:
+    MessageQueue() : _mutex(_m_mutex), _size(0) {}
     T pop() {
-        Lock lock(Mutex(_m_mutex));
+        Lock lock(_mutex);
         T tmp = _queue.front();
         _queue.pop_front();
+        _size--;
         return tmp;
     }
     void push(T& elem) {
-        Lock lock(Mutex(_m_mutex));
+        Lock lock(_mutex);
         _queue.push_back(elem);
+        _size++;
     }
     size_t size() {
-        return _queue.size();
+        return _size;
     }
 private:
     pthread_mutex_t _m_mutex;
+    Mutex _mutex;
     std::deque<T> _queue;
+    size_t _size;
 };
 }
 

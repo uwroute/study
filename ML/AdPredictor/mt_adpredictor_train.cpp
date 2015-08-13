@@ -18,6 +18,7 @@ DEFINE_double(eps, 0.0, "eps");
 DEFINE_int32(max_fea_num, 1000*10000, "fea num");
 DEFINE_int32(thread_num, 0, "thread_num");
 DEFINE_int32(max_iter, 1, "max iter");
+DEFINE_int32(mini_batch, 0, "mini batch");
 DEFINE_double(sample_rate, 1.0, "sample rate");
 DEFINE_bool(use_bias,  true, "if use bias");
 DEFINE_double(bias, 1.0, "bias value");
@@ -42,10 +43,16 @@ void train(const std::string& file, ParallelAdPredictor& model)
         LOG_ERROR("Load Data File  %s Failed!", file.c_str());
         return;
     }
+    model.init(FLAGS_init_mean, FLAGS_init_variance,  FLAGS_beta, FLAGS_eps, FLAGS_mini_batch, FLAGS_max_fea_num, FLAGS_use_bias, FLAGS_bias);
+    time_t start = time(NULL);
     for (int i=0; i<data.sample_num; ++i) {
+        LOG_DEBUG("Train  %d sample!", i);
         model.train(&(data.samples[data.sample_idx[i]]), data.labels[i]);
     }
+    model.train(NULL, 0.0);
     model.join();
+    time_t t = time(NULL)-start;
+    LOG_INFO("Train cost time : %lu s", t);
     model.merge_model();
 }
 
@@ -54,7 +61,6 @@ int main(int argc, char** argv)
     google::ParseCommandLineFlags(&argc, &argv, true);
     log_level = FLAGS_log_level;
     ML::ParallelAdPredictor model(FLAGS_thread_num);
-    model.init(FLAGS_init_mean, FLAGS_init_variance,  FLAGS_beta, FLAGS_eps, FLAGS_max_fea_num, FLAGS_use_bias, FLAGS_bias);
     int32_t iter = 0;
     while (iter++ < FLAGS_max_iter)
     {

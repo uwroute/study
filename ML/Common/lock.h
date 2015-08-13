@@ -17,12 +17,12 @@ namespace Common
 {
 struct Mutex {
 public:
-    Mutex(pthread_mutex_t m);
+    Mutex(pthread_mutex_t& m);
     ~Mutex();
     void lock();
     void unlock();
 private:
-    pthread_mutex_t& _m_mutex;
+    pthread_mutex_t* _p_m_mutex;
 };
 struct  Lock
 {
@@ -30,7 +30,7 @@ public:
     Lock(Mutex& m);
     ~Lock();
 private:
-    Mutex& _mutex;
+    Mutex* _p_mutex;
 };
 }
 #endif
