@@ -33,6 +33,59 @@ uint32_t log_level = 0;
 
 using namespace ML;
 
+void train_single(const std::string& file, ParallelAdPredictor& model)
+{
+    if (file.empty())
+    {
+        std::cout<< "data file is empty!" << std::endl;
+        return;
+    }
+    std::ifstream infile(file.c_str());
+    if (!infile)
+    {
+        LOG_ERROR("Load data file : %s failed!", file.c_str());
+        return;
+    }
+    srand( (unsigned)time( NULL ) );
+    model.init(FLAGS_init_mean, FLAGS_init_variance,  FLAGS_beta, FLAGS_eps, FLAGS_mini_batch, FLAGS_max_fea_num, FLAGS_use_bias, FLAGS_bias);
+    // samples
+    std::string line;
+    std::vector<LongFeature> sample;
+    double label = 0.0;
+    LongFeature end_fea;
+    end_fea.index = -1;
+    end_fea.value = 0.0;
+
+    int line_count = 0;
+    time_t start = time(NULL);
+    getline(infile, line);
+    while (!infile.eof())
+    {
+        sample.clear();
+        label = 0.0;
+        uint64_t ret = toSample(line, sample, label);
+        if (ret > 0)
+        {
+            sample.push_back(end_fea);
+            if (label < 0.5 && ( rand()*1.0/RAND_MAX > FLAGS_sample_rate) )
+            {
+                   getline(infile, line);
+                   continue;
+            }
+            model.train(&(sample[0]), label);
+            line_count ++;
+            if (line_count%FLAGS_line_step == 0)
+            {
+                time_t end = time(NULL);
+                LOG_INFO("Train Lines : %d cost %d ms", line_count, int(end-start));
+            }
+        }
+        getline(infile, line);
+    }
+
+    infile.close();
+}
+
 void train(const std::string& file, ParallelAdPredictor& model)
 {
     srand( (unsigned)time( NULL ) );
@@ -64,7 +117,14 @@ int main(int argc, char** argv)
     int32_t iter = 0;
     while (iter++ < FLAGS_max_iter)
     {
-        train(FLAGS_train_file, model);
+        if (FLAGS_thread_num == 0)
+        {
+            train_single(FLAGS_train_file, model);
+        }
+        else
+        {
+            train(FLAGS_train_file, model);
+        }
     }
     model.save_model(FLAGS_model_file);
     return 0;
