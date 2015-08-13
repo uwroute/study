@@ -192,17 +192,17 @@ void AdPredictor::active_mean_variance_withEE(const LongFeature* sample, double&
     {
         if (_w_mean.end() != _w_mean.find(sample->index))
         {
-            total_mean += (_w_variance[sample->index] * gaussrand() + _w_mean[sample->index] )* sample->value;
+            total_mean += (sqrt(_w_variance[sample->index]) * gaussrand() + _w_mean[sample->index] )* sample->value;
         }
         else
         {
-            total_mean += (_init_variance * gaussrand() + _init_mean )* sample->value;
+            total_mean += (sqrt(_init_variance) * gaussrand() + _init_mean )* sample->value;
         }
         sample++;
     }
     if (_USE_BIAS)
     {
-        total_mean += (_bias_variance * gaussrand() + _bias_mean )* _bias;
+        total_mean += (sqrt(_bias_variance) * gaussrand() + _bias_mean )* _bias;
     }
     total_variance += _beta*_beta;
 }
