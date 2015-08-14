@@ -43,3 +43,18 @@ cc_binary(
            ],
     optimize = ['O3']
 )
+
+cc_binary(
+    name = 'adpredictor_pure',
+    srcs = [
+        'adpredictor_pure.cpp',
+        'adpredictor.cpp'
+    ],
+    incs = ['../../..//ThirdParty/gflags/include/',
+           '../'],
+    deps = ['//study/ML/Common:common',
+            '//ThirdParty/gflags/lib:gflags',
+            '//study/ML/data:data'
+           ],
+    optimize = ['O3']
+)

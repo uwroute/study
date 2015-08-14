@@ -30,8 +30,12 @@ int main(int argc, char** argv)
     log_level = FLAGS_log_level;
 
     AdPredictor model;
-    model.load_model(FLAGS_model_file);
-    LOG_DEBUG("load model %s successful!", FLAGS_model_file.c_str());
+    if (-1 == model.load_model(FLAGS_model_file))
+    {
+        LOG_ERROR("load model %s failed!", FLAGS_model_file.c_str());
+        return -1;
+    }
+    LOG_INFO("load model %s successful!", FLAGS_model_file.c_str());
 
     srand( (unsigned)time( NULL ) );
 

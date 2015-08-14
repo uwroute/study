@@ -34,16 +34,19 @@ public:
     void train(const LongFeature* sample, double label);
     double predict(const LongFeature* sample, bool useEE = false);
     void save_model(const std::string& file);
-    void load_model(const std::string& file);
+    int load_model(const std::string& file);
+    void puring_model(int fea_num, double threshold);
 public:
     void set_init_mean(double mean) {_init_mean=mean;}
     void set_init_variance(double variance) {_init_variance=variance;}
     void set_beta(double beta) {_beta=beta;}
     void active_mean_variance(const LongFeature* sample, double& total_mean, double& total_variance);
     void active_mean_variance_withEE(const LongFeature* sample, double& total_mean, double& total_variance);
-    double cumulative_probability(double  t, double mean, double variance);
-    double gauss_probability(double t, double mean, double variance);
+    double cumulative_probability(double  t, double mean=0.0, double variance=1.0);
+    double gauss_probability(double t, double mean=0.0, double variance=1.0);
     double gaussrand();
+    bool puring_feature(double mean, double variance, int fea_num, double threshold);
+    double KL(double p, double q); // KL(p||q)
 public:
     // for Parallel
     void merge(AdPredictor& other);

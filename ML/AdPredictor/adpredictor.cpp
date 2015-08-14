@@ -128,7 +128,7 @@ void AdPredictor::save_model(const std::string& file)
     }
 }
 
-void AdPredictor::load_model(const std::string& file)
+int AdPredictor::load_model(const std::string& file)
 {
     std::ifstream infile(file.c_str());
     std::string line;
@@ -141,21 +141,37 @@ void AdPredictor::load_model(const std::string& file)
     _beta = atof(line.c_str());
     getline(infile, line);
     _eps = atof(line.c_str());
+    getline(infile, line); 
+    _USE_BIAS = atoi(line.c_str());
     getline(infile, line);  
-    sscanf(line.c_str(), "%lf\t%lf\t%lf", &_bias, &_bias_mean, &_bias_variance);
+    if (3 != sscanf(line.c_str(), "%lf\t%lf\t%lf", &_bias, &_bias_mean, &_bias_variance))
+    {
+        LOG_ERROR("Parser Bias Error :  %s", line.c_str());
+        infile.close();
+        return -1;
+    }
     getline(infile, line); // get fea size
     int w_size = atoi(line.c_str());
     _w_mean.reserve(w_size);
     _w_variance.reserve(w_size);
+    getline(infile, line);
     while (!infile.eof())
     {
         uint64_t fea = 0;
         double mean=0.0, variance=0.0;
-        sscanf(line.c_str(), "%lu\t%lf\t%lf", &fea, &mean, &variance);
+        if (3 != sscanf(line.c_str(), "%lu\t%lf\t%lf", &fea, &mean, &variance) )
+        {
+            LOG_ERROR("Parser Weight Error :  %s", line.c_str());
+            infile.close();
+            return -1;
+        }
         _w_mean[fea] = mean;
         _w_variance[fea] = variance;
         getline(infile, line);
     }
+    infile.close();
+    LOG_INFO("Load Mode Size : %lu", _w_mean.size());
+    return 0;
 }
 
 void AdPredictor::active_mean_variance(const LongFeature* sample, double& total_mean, double& total_variance)
@@ -375,4 +391,42 @@ void AdPredictor::clear_message()
     _bias_mean_message = 0.0;
     _bias_variance_message = 0.0;
 }
+
+void AdPredictor::puring_model(int fea_num, double threshold)
+{
+    std::vector<uint64_t> filter_feature;
+    filter_feature.reserve(_w_mean.size());
+    for (DoubleHashMap::const_iterator iter = _w_mean.begin(); iter != _w_mean.end(); ++iter)
+    {
+        if (puring_feature(_w_mean[iter->first], _w_variance[iter->first], fea_num, threshold))
+        {
+            filter_feature.push_back(iter->first);
+        }
+    }
+    for (size_t i=0; i<filter_feature.size(); ++i)
+    {
+        _w_mean.erase(filter_feature[i]);
+        _w_variance.erase(filter_feature[i]);
+    }
+}
+
+bool AdPredictor::puring_feature(double mean, double variance, int fea_num, double threshold)
+{
+    double prior_mean = _init_mean*fea_num;
+    double prior_variance = _init_variance*fea_num + _beta*_beta;
+    double poster_mean = _init_mean*(fea_num-1) + mean;
+    double poster_variance = _init_variance*(fea_num-1) + variance + _beta*_beta;
+    double prior_prob = cumulative_probability(prior_mean/sqrt(prior_variance));
+    double poster_prob = cumulative_probability(poster_mean/sqrt(poster_variance));
+    if (KL(prior_prob, poster_prob) < threshold)
+    {
+        return true;
+    }
+    return false;
+}
+double AdPredictor::KL(double p, double q)
+{
+    return p*(log(p) - log(q)) + (1-p)*(log(1-p) - log(1-q));
+}
+
 }
