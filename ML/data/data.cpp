@@ -246,6 +246,56 @@ int load_data(const std::string& file, LongDataSet& data, double down_sample)
     return 0;
 }
 
+int load_data(std::ifstream& infile, LongDataSet& data, int mini_batch, double down_sample)
+{
+    unsigned seed = (unsigned)time( NULL );
+    srand(seed);
+
+    std::string line;
+    std::vector<LongFeature> sample;
+    double label = 0.0;
+    // compute data.sample_fea_num, data.sample_num
+
+    getline(infile, line);
+    LongFeature end_fea;
+    end_fea.index = -1;
+    end_fea.value = 0.0;
+    while (!infile.eof() && (mini_batch > 0))
+    {
+        sample.clear();
+        uint64_t ret = toSample(line, sample, label);
+        if (ret > 0)
+        {   
+            if (label < 0.5 && ( rand()*1.0/RAND_MAX > down_sample) )
+            {
+                    mini_batch--;
+                    if (mini_batch > 0)
+                    {
+                        getline(infile, line);
+                    }
+                   continue;
+            }
+            data.sample_idx.push_back(data.samples.size());
+            data.samples.insert(data.samples.end(), sample.begin(), sample.end());
+            data.samples.push_back(end_fea);
+            data.labels.push_back(label);
+            data.max_fea_num = std::max(data.max_fea_num, ret);
+        }
+        mini_batch--;
+        if (mini_batch > 0)
+        {
+            getline(infile, line);
+        }
+    }
+    data.max_fea_num ++;
+    data.sample_fea_num = data.samples.size();
+    data.sample_num = data.labels.size();
+    LOG_DEBUG("Load Data : Sample Fea Num = %lu", data.samples.size());
+    LOG_INFO("Load Data : Sample Num = %lu", data.labels.size());
+    LOG_DEBUG("Load Data : Max Fea Num = %lu", data.max_fea_num);
+    return 0;
+}
+
 uint64_t toSample(const std::string& line, std::vector<LongMatrixFeature>& sample, double& label)
 {
     std::vector<std::string> vec;

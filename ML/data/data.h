@@ -67,6 +67,7 @@ int toSample(const std::string& line, std::vector<Feature>& sample, double& labe
 int load_data(const std::string& file, DataSet& data);
 uint64_t toSample(const std::string& line, std::vector<LongFeature>& sample, double& label);
 int load_data(const std::string& file, LongDataSet& data, double down_sample = 1.0);
+int load_data(std::ifstream & infile, LongDataSet& data, int mini_batch, double down_sample);
 uint64_t toSample(const std::string& line, std::vector<LongMatrixFeature>& sample, double& label);
 
 }

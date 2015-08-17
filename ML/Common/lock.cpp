@@ -31,4 +31,35 @@ Lock::Lock(Mutex& m) : _p_mutex(&m) {
 Lock::~Lock() {
 	_p_mutex->unlock();
 }
+
+RWMutex::RWMutex(pthread_rwlock_t& m) : _p_m_mutex(&m) {
+	pthread_rwlock_init(_p_m_mutex, NULL);
+}
+RWMutex::~RWMutex() {
+	pthread_rwlock_destroy(_p_m_mutex);
+}
+void RWMutex::rlock() { 
+	pthread_rwlock_rdlock(_p_m_mutex);
+}
+void RWMutex::wlock() { 
+	pthread_rwlock_wrlock(_p_m_mutex);
+}
+void RWMutex::unlock() { 
+	pthread_rwlock_unlock(_p_m_mutex);
+}
+
+RLock::RLock(RWMutex& m) : _p_mutex(&m) {
+	_p_mutex->rlock();
+}
+RLock::~RLock() {
+	_p_mutex->unlock();
+}
+
+WLock::WLock(RWMutex& m) : _p_mutex(&m) {
+	_p_mutex->wlock();
+}
+WLock::~WLock() {
+	_p_mutex->unlock();
+}
+
 }

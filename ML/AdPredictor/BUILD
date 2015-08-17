@@ -58,3 +58,18 @@ cc_binary(
            ],
     optimize = ['O3']
 )
+
+cc_binary(
+    name = 'padpredictor_train',
+    srcs = [
+        'parallel_adpredictor_train.cpp',
+        'parallel_adpredictor.cpp'
+    ],
+    incs = ['../../../ThirdParty/gflags/include/',
+           '../'],
+    deps = ['//study/ML/Common:common',
+            '//ThirdParty/gflags/lib:gflags',
+            '//study/ML/data:data'
+           ],
+    optimize = ['O3']
+)

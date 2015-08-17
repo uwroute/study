@@ -24,6 +24,7 @@ public:
 private:
     pthread_mutex_t* _p_m_mutex;
 };
+
 struct  Lock
 {
 public:
@@ -32,5 +33,35 @@ public:
 private:
     Mutex* _p_mutex;
 };
+
+struct RWMutex {
+public:
+    RWMutex(pthread_rwlock_t& m);
+    ~RWMutex();
+    void rlock();
+    void wlock();
+    void unlock();
+private:
+    pthread_rwlock_t* _p_m_mutex;
+};
+
+struct  RLock
+{
+public:
+    RLock(RWMutex& m);
+    ~RLock();
+private:
+    RWMutex* _p_mutex;
+};
+
+struct  WLock
+{
+public:
+    WLock(RWMutex& m);
+    ~WLock();
+private:
+    RWMutex* _p_mutex;
+};
+
 }
 #endif
