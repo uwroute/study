@@ -226,7 +226,7 @@ void AdPredictorSlave::train(LongFeature* sample, double label)
     }
     double total_mean=0.0, total_variance=0.0;
     active_mean_variance(sample, total_mean, total_variance);
-    LOG_TRACE("total_mean : %lf, total_variance : %lf", total_mean, total_variance);
+    LOG_INFO("total_mean : %lf, total_variance : %lf", total_mean, total_variance);
     double t = label*total_mean/sqrt(total_variance);
     if (fabs(t) > 5.0)
     {

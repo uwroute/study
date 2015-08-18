@@ -363,8 +363,8 @@ void AdPredictor::compute_message(const LongFeature* sample, double label)
         mean += label*sample->value*variance/sqrt(total_variance)*v;
         variance *=  1 - sample->value*sample->value*variance/total_variance*w;
 
-        _w_variance_message[sample->index] = (_w_variance[sample->index] - variance)/(variance*_w_variance[sample->index]);
-        _w_mean_message[sample->index] = mean/variance - _w_mean[sample->index]/_w_variance[sample->index];
+        _w_variance_message[sample->index] += (_w_variance[sample->index] - variance)/(variance*_w_variance[sample->index]);
+        _w_mean_message[sample->index] += mean/variance - _w_mean[sample->index]/_w_variance[sample->index];
 
         LOG_TRACE("fea_index : %lu,  mean : %lf, variance : %lf", sample->index, mean, variance);
         LOG_TRACE("fea_index : %lu,  mean_msg : %lf, variance_msg : %lf", sample->index, _w_mean_message[sample->index], _w_variance_message[sample->index]);
@@ -378,8 +378,8 @@ void AdPredictor::compute_message(const LongFeature* sample, double label)
         mean += label*_bias*variance/sqrt(total_variance)*v;
         variance *=  1 - fabs(_bias)*variance/total_variance*w;
 
-        _bias_mean_message = mean/variance - _bias_mean/_bias_variance;
-        _bias_variance_message= (_bias_variance - variance)/(variance*_bias_variance);
+        _bias_mean_message += mean/variance - _bias_mean/_bias_variance;
+        _bias_variance_message += (_bias_variance - variance)/(variance*_bias_variance);
         
         LOG_TRACE("bias , mean_msg : %lf,  variance_msg : %lf", _bias_mean_message, _bias_variance_message);
     }
