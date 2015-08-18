@@ -291,7 +291,7 @@ int load_data(std::ifstream& infile, LongDataSet& data, int mini_batch, double d
     data.sample_fea_num = data.samples.size();
     data.sample_num = data.labels.size();
     LOG_DEBUG("Load Data : Sample Fea Num = %lu", data.samples.size());
-    LOG_INFO("Load Data : Sample Num = %lu", data.labels.size());
+    LOG_DEBUG("Load Data : Sample Num = %lu", data.labels.size());
     LOG_DEBUG("Load Data : Max Fea Num = %lu", data.max_fea_num);
     return 0;
 }

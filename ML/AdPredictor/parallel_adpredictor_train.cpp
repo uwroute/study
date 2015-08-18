@@ -81,7 +81,7 @@ int main(int argc, char** argv)
     for (int i=0; i<slave_num; ++i)
     {
         LOG_INFO("Init Slave %d", i+1);
-        slaves[i].init(FLAGS_init_mean, FLAGS_init_variance, FLAGS_beta, FLAGS_eps, mini_batch, FLAGS_max_fea_num, FLAGS_use_bias, FLAGS_sample_rate, FLAGS_slave_update);
+        slaves[i].init(FLAGS_init_mean, FLAGS_init_variance, FLAGS_beta, FLAGS_eps, mini_batch, mini_batch*100, FLAGS_use_bias, FLAGS_sample_rate, FLAGS_slave_update);
         slaves[i].set_seri(i+1);
         slaves[i].set_master(&model);
         SlaveThreadData data;

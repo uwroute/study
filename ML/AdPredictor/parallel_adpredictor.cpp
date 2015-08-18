@@ -67,7 +67,7 @@ void AdPredictorMaster::update_bias_message(const Message& param)
 	_bias_message.vMsg += param.vMsg;
 	double variance = 1.0/_bias_message.vMsg;
 	double mean = variance*_bias_message.mMsg;
-	LOG_INFO("master bias , mean : %lf,  variance : %lf", mean,  variance);
+	LOG_TRACE("master bias , mean : %lf,  variance : %lf", mean,  variance);
 }
 
 void AdPredictorMaster::update_message(const Request& req)
@@ -265,7 +265,7 @@ void AdPredictorSlave::train(LongFeature* sample, double label)
     {
         double mean = _bias_param.m;
         double variance = _bias_param.v;
-        LOG_INFO("Slave before bias , mean : %lf,  variance : %lf", mean, variance);
+        LOG_TRACE("Slave before bias , mean : %lf,  variance : %lf", mean, variance);
 
         mean += label*_bias*variance/sqrt(total_variance)*v;
         variance *=  1 - fabs(_bias)*variance/total_variance*w;
@@ -282,7 +282,7 @@ void AdPredictorSlave::train(LongFeature* sample, double label)
 	 _bias_param.v = rectify_variance;
         }
         
-        LOG_INFO("Slave bias , mean : %lf,  variance : %lf", rectify_mean, rectify_variance);
+        LOG_TRACE("Slave bias , mean : %lf,  variance : %lf", rectify_mean, rectify_variance);
     }
 }
 
@@ -391,7 +391,12 @@ void AdPredictorSlave::train_minibatch(LongDataSet& data)
 	for (int i=0; i<data.sample_num; ++i)
 	{
 		LongFeature* sample = &(data.samples[data.sample_idx[i]]);
-		train(sample, data.labels[data.sample_idx[i]]);
+		_train_count ++;
+		if (_train_count%100000 == 0)
+		{
+			LOG_INFO("Slave %d train %d samples!", _seri, _train_count-1);
+		}
+		train(sample, data.labels[i]);
 	}
 	form_update_request(req);
 	LOG_TRACE("Slave %d update message to master", _seri);
@@ -427,7 +432,7 @@ void AdPredictorSlave::form_update_request(Request& req)
 	req.type = UPDATE_PARAM;
 	req.messages_idx.push_back(-1);
 	req.messages_val.push_back(_bias_message);
-	LOG_INFO("bias msg : idx=%lu, mMsg=%lf, vMsg=%lf", req.messages_idx[0], req.messages_val[0].mMsg, req.messages_val[0].vMsg);
+	LOG_TRACE("bias msg : idx=%lu, mMsg=%lf, vMsg=%lf", req.messages_idx[0], req.messages_val[0].mMsg, req.messages_val[0].vMsg);
 	for (MessageHashMap::iterator iter=_messages.begin(); iter!=_messages.end(); ++iter)
 	{
 		req.messages_idx.push_back(iter->first);
@@ -439,7 +444,7 @@ void AdPredictorSlave::update_param(Response& res)
 {
 	_bias_param.v = 1.0/res.messages_val[0].vMsg;
 	_bias_param.m = _bias_param.v*res.messages_val[0].mMsg;
-	LOG_INFO("update bias : m=%lf, v=%lf", _bias_param.m, _bias_param.v);
+	LOG_TRACE("update bias : m=%lf, v=%lf", _bias_param.m, _bias_param.v);
 	for (size_t i=1; i<res.messages_idx.size(); ++i)
 	{
 		Param cur_param;

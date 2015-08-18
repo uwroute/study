@@ -109,7 +109,7 @@ public:
     typedef std::unordered_map<uint64_t, Message> MessageHashMap;
     typedef std::unordered_map<uint64_t, Param> ParamHashMap;
 public:
-    AdPredictorSlave() : _bias(1.0) {}
+    AdPredictorSlave() : _bias(1.0),_train_count(0) {}
     ~AdPredictorSlave() {}
     void init(double mean, double variance, double beta, double eps, int mini_batch, size_t max_fea_num, bool ues_bias, double down_sample, bool update);
     void set_master(AdPredictorMaster* p) {_p_master = p;}
