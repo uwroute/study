@@ -158,6 +158,10 @@ void MatchBox::train(const LongMatrixFeature* sample, double label) {
 	clear_state();
 	// down passing
 	// compute (sk->*), (tk->*), (b->+)
+	int cur_user_fea_num = 0;
+	int cur_bias_fea_num = 0;
+	int cur_item_fea_num = 0;
+	bool update_user_and_item = true;
 	const LongMatrixFeature* start = sample;
 	while (sample->index != (uint64_t)-1)
 	{
@@ -167,6 +171,7 @@ void MatchBox::train(const LongMatrixFeature* sample, double label) {
 			p.m *= sample->value;
 			p.v  *= sample->value*sample->value;
 			_b = addGauss(_b, p);
+			cur_bias_fea_num++;
 		}
 		if ( is_user(sample->type))
 		{
@@ -176,7 +181,9 @@ void MatchBox::train(const LongMatrixFeature* sample, double label) {
 				p.m *= sample->value;
 				p.v  *= sample->value*sample->value;
 				_s[i] = addGauss(_s[i], p);
+				LOG_DEBUG("fea idx : %lu, %d, %lf, %lf, %lf", sample->index, i, p.m, p.v, sample->value);
 			}
+			cur_user_fea_num++;
 		}
 		else if ( is_item(sample->type))
 		{
@@ -187,18 +194,39 @@ void MatchBox::train(const LongMatrixFeature* sample, double label) {
 				p.v  *= sample->value*sample->value;
 				_t[i] = addGauss(_t[i], p);
 			}
+			cur_item_fea_num++;
 		}
 		else {}
 		sample++;
 	}
+	if ( (cur_item_fea_num==0) && (cur_user_fea_num==0) && (cur_bias_fea_num==0) )
+	{
+		return;
+	}
+	if (cur_user_fea_num == 0)
+	{
+		update_user_and_item =false;
+		LOG_WARNING("%s", "Sample has no user feature!");
+	}
+	if (cur_item_fea_num == 0)
+	{
+		update_user_and_item =false;
+		LOG_WARNING("%s", "Sample has no item feature!");
+	}
 	_b = addGauss(_b, _bias);
 	// compute (*->zk) = (zk->+)
 	Param total_z;
-	for (int i=0; i<_k; ++i)
+	if (update_user_and_item)
 	{
-		_z[i].m = _s[i].m *_t[i].m ; 
-		_z[i].v = (_s[i].v + square(_s[i].m) ) * ( _t[i].v + square(_t[i].m)  ) - square(_s[i].m*_t[i].m);
-		total_z = addGauss(total_z, _z[i]);
+		for (int i=0; i<_k; ++i)
+		{
+			_z[i].m = _s[i].m *_t[i].m ; 
+			_z[i].v = (_s[i].v + square(_s[i].m) ) * ( _t[i].v + square(_t[i].m)  ) - square(_s[i].m*_t[i].m);
+			total_z = addGauss(total_z, _z[i]);
+			LOG_DEBUG("s : [%lf, %lf]", _s[i].m, _s[i].v);
+			LOG_DEBUG("t : [%lf, %lf]", _t[i].m, _t[i].v);
+			LOG_DEBUG("total_z : [%lf, %lf]", total_z.m, total_z.v);
+		}
 	}
 	// compute (r->+)
 	_r = addGauss(_r, total_z);
@@ -210,14 +238,6 @@ void MatchBox::train(const LongMatrixFeature* sample, double label) {
 	// compute p(r') = (+->r')*P(r'>0)
 	Param r_post;
 	r_post = truncatedGauss(_r, label);
-	/*if (label > 0.5)
-	{
-		r_post = truncatedGauss(_r, 0, 1000);
-	}
-	else
-	{
-		r_post = truncatedGauss(_r, -1000, 0);
-	}//*/
 	
 	LOG_DEBUG("r_post : [%lf, %lf]", r_post.m, r_post.v);
 	// up passing
@@ -230,23 +250,26 @@ void MatchBox::train(const LongMatrixFeature* sample, double label) {
 	// compute  (+->zk) = (zk->*)
 	Param Up_z = decGauss(_r, _b);
 	Param Up_zk = decGauss(Up_z, total_z);
-	for (int i=0; i<_k; ++i)
+	if (update_user_and_item)
 	{
-		_z[i].m = Up_zk.m + _z[i].m;
-		_z[i].v = Up_zk.v - _z[i].v; 
-		//  compute (*->sk) = (sk->+)
-		double tk_second_moment = second_moment(_t[i]);
-		Param Up_sk;
-		Up_sk.m = _z[i].m*_t[i].m/tk_second_moment;
-		Up_sk.v = _z[i].v / tk_second_moment;
-		//  compute (*->tk) = (tk->+)
-		double sk_second_moment = second_moment(_s[i]);
-		Param Up_tk;
-		Up_tk.m = _z[i].m*_s[i].m/sk_second_moment;
-		Up_tk.v = _z[i].v / sk_second_moment;
-		// compute (+->u_ki) - u_ki 
-		_s[i] = decGauss(Up_sk, _s[i]);
-		_t[i] = decGauss(Up_tk, _t[i]);
+		for (int i=0; i<_k; ++i)
+		{
+			_z[i].m = Up_zk.m + _z[i].m;
+			_z[i].v = Up_zk.v - _z[i].v; 
+			//  compute (*->sk) = (sk->+)
+			double tk_second_moment = second_moment(_t[i]);
+			Param Up_sk;
+			Up_sk.m = _z[i].m*_t[i].m/tk_second_moment;
+			Up_sk.v = _z[i].v / tk_second_moment;
+			//  compute (*->tk) = (tk->+)
+			double sk_second_moment = second_moment(_s[i]);
+			Param Up_tk;
+			Up_tk.m = _z[i].m*_s[i].m/sk_second_moment;
+			Up_tk.v = _z[i].v / sk_second_moment;
+			// compute (+->u_ki) - u_ki 
+			_s[i] = decGauss(Up_sk, _s[i]);
+			_t[i] = decGauss(Up_tk, _t[i]);
+		}
 	}
 	// (+->w) - w
 	_b = decGauss(UP_b, _b);
@@ -270,7 +293,7 @@ void MatchBox::train(const LongMatrixFeature* sample, double label) {
 			p = multGauss(Up_w, p);
 			set_w_param(sample->index, p);
 		}
-		if ( is_user(sample->type))
+		if ( is_user(sample->type) && update_user_and_item)
 		{
 			for (int i=0; i<_k; ++i)
 			{
@@ -282,7 +305,7 @@ void MatchBox::train(const LongMatrixFeature* sample, double label) {
 				set_user_param(sample->index, i, p);
 			}
 		}
-		else if ( is_item(sample->type))
+		else if ( is_item(sample->type) && update_user_and_item)
 		{
 			for (int i=0; i<_k; ++i)
 			{
@@ -291,6 +314,7 @@ void MatchBox::train(const LongMatrixFeature* sample, double label) {
 				Up_v.m = (_t[i].m + p.m)/sample->value;
 				Up_v.v = (_t[i].v - p.v)/square(sample->value);
 				p = multGauss(Up_v, p);
+				LOG_DEBUG("Up_v : %lf, %lf", Up_v.m, Up_v.v);
 				set_item_param(sample->index, i, p);
 			}
 		}
@@ -456,6 +480,7 @@ MatchBox::Param MatchBox::get_user_param(uint64_t idx, int k) {
 	}
 	Param res = _user_prior[k];
 	res.m = gaussrand()*_user_prior[k].v + _user_prior[k].m;
+	LOG_DEBUG("idx : %lu, %d, %lf, %lf", idx, k, res.m, res.v);
 	return res;
 }
 MatchBox::Param MatchBox::get_item_param(uint64_t idx, int k) {

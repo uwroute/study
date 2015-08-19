@@ -96,7 +96,7 @@ int loadFeaMap(const std::string& file)
        while (!infile.eof())
        {
        	int fea=0,fea_type=0;
-       	if (2 == sscanf(line.c_str(), "%d:%d", &fea, &fea_type))
+       	if (2 <= sscanf(line.c_str(), "%d %d", &fea, &fea_type))
        	{
        		fea_map[fea] = fea_type;
        		LOG_INFO("Add Fea Map : %d => %d", fea, fea_type);
