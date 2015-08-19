@@ -296,7 +296,7 @@ int load_data(std::ifstream& infile, LongDataSet& data, int mini_batch, double d
     return 0;
 }
 
-uint64_t toSample(const std::string& line, std::vector<LongMatrixFeature>& sample, double& label)
+uint64_t toSample(const std::string& line, std::vector<LongMatrixFeature>& sample, double& label, getTypeFunc& typeFunc)
 {
     std::vector<std::string> vec;
     splitString(line, vec, ' ');
@@ -313,7 +313,7 @@ uint64_t toSample(const std::string& line, std::vector<LongMatrixFeature>& sampl
         fea.index = 0;
         fea.value = 0.0;
         fea.type = 2;
-        if (sscanf(vec[i].c_str(), "%lu:%lf:%d", &(fea.index), &(fea.value), &(fea.type)))
+        if (2 <= sscanf(vec[i].c_str(), "%lu:%lf:%d", &(fea.index), &(fea.value), &(fea.type)))
         {
             if (fea.index == (uint64_t)-1)
             {
@@ -321,10 +321,7 @@ uint64_t toSample(const std::string& line, std::vector<LongMatrixFeature>& sampl
                 return 0;
             }
             fea.index--;
-            if (fea.index < 7)
-            {
-                fea.type = 3;
-            }
+            fea.type = typeFunc(fea);
             sample.push_back(fea);
         }
         else {
@@ -338,6 +335,11 @@ uint64_t toSample(const std::string& line, std::vector<LongMatrixFeature>& sampl
         return 0;
     }
     return MAX_FEA_NUM;
+}
+
+int getTypeFunc::operator()(LongMatrixFeature& fea)
+{
+    return fea.type;
 }
 
 }

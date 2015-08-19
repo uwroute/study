@@ -62,6 +62,9 @@ private:
 	void clear_state();
 	void saveMap(std::ostream& out_file, ParamMap& map);
 	void loadMap(std::istream& infile, ParamMap& map);
+	bool is_bias(int type) { return type & 0x01;}
+	bool is_user(int type) { return type & 0x02;}
+	bool is_item(int type) {return type & 0x04;}
 private:
 	double gaussrand()
 	{

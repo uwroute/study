@@ -23,6 +23,8 @@
 DEFINE_string(train_file, "", "train data");
 DEFINE_string(model_file, "matchbox.model", "model file");
 DEFINE_string(warm_model_file, "", "warm_model file");
+DEFINE_string(fea_map, "fea_map", "fea_map");
+DEFINE_string(type_func, "prefix", "prefix(prefix=fea>>48), fea");
 DEFINE_int32(k, 0, "k dim");
 DEFINE_string(prior_mean, "0.0,0.0,0.0", "prior_mean");
 DEFINE_string(prior_variance, "1.0,1.0,1.0", "prior_variance");
@@ -41,6 +43,77 @@ DEFINE_int32(log_level, 2, "LogLevel :"
 uint32_t log_level = 0;
 
 using namespace ML;
+std::map<int, int> fea_map;
+getTypeFunc* typeFunc = NULL;
+
+class classTypeFunc : public getTypeFunc {
+public:
+	int operator()(LongMatrixFeature& fea)
+	{
+		if (!_map)
+		{
+			return 0;
+		}
+		uint64_t prefix = fea.index >> 48;
+		if (_map->find(prefix) != _map->end())
+		{
+			return (*_map)[prefix];
+		}
+		return 0;
+	}
+};
+
+class feaTypeFunc : public getTypeFunc {
+public:
+	int operator()(LongMatrixFeature& fea)
+	{
+		if (!_map)
+		{
+			return 0;
+		}
+		if (_map->find(fea.index) != _map->end())
+		{
+			return (*_map)[fea.index];
+		}
+		return 0;
+	}
+	void set(std::map<int, int>* map) {_map=map;}
+private:
+	std::map<int, int>* _map;
+};
+
+int loadFeaMap(const std::string& file)
+{
+      if (file.empty())
+      {
+           LOG_ERROR("Fea map file : %s is Null", file.c_str());
+           return -1;
+       }
+       std::ifstream infile(file.c_str());
+       if (!infile)
+       {
+          LOG_ERROR("Load fea map file : %s failed!", file.c_str());
+          return -1;
+       }
+       std::string line;
+       getline(infile, line);
+       while (!infile.eof())
+       {
+       	int fea=0,fea_type=0;
+       	if (2 == sscanf(line.c_str(), "%d:%d", &fea, &fea_type))
+       	{
+       		fea_map[fea] = fea_type;
+       		LOG_INFO("Add Fea Map : %d => %d", fea, fea_type);
+       	}
+       	else
+       	{
+       		LOG_ERROR("Parse Fea Map failed: %s", line.c_str());
+       	}
+       	getline(infile, line);
+       }
+       infile.close();
+       return 0;
+}
 
 void train(const std::string& file, MatchBox& model)
 {
@@ -55,6 +128,7 @@ void train(const std::string& file, MatchBox& model)
         LOG_ERROR("Load data file : %s failed!", file.c_str());
         return;
     }
+
     srand( (unsigned)time( NULL ) );
     // samples
     std::string line;
@@ -71,7 +145,7 @@ void train(const std::string& file, MatchBox& model)
     {
         sample.clear();
         label = 0.0;
-        uint64_t ret = toSample(line, sample, label);
+        uint64_t ret = toSample(line, sample, label, *typeFunc);
         if (ret > 0)
         {
             sample.push_back(end_fea);
@@ -98,6 +172,24 @@ int main(int argc, char** argv)
 {
     google::ParseCommandLineFlags(&argc, &argv, true);
     log_level = FLAGS_log_level;
+    if (loadFeaMap(FLAGS_fea_map))
+    {
+    	return -1;
+    }
+    if (FLAGS_type_func=="prefix")
+    {
+    	typeFunc = new classTypeFunc();
+    }
+    else if (FLAGS_type_func == "fea")
+    {
+    	typeFunc = new feaTypeFunc();
+    }
+    else
+    {
+    	typeFunc = new getTypeFunc();
+    }
+    typeFunc->set(&fea_map);
+    
     ML::MatchBox model;
     model.init(FLAGS_k, FLAGS_prior_mean, FLAGS_prior_variance,  FLAGS_beta, FLAGS_max_fea_num);
     int32_t iter = 0;
@@ -110,5 +202,6 @@ int main(int argc, char** argv)
     LOG_INFO("%s", "Save MatchBox model start!");
     model.save_model(FLAGS_model_file);
     LOG_INFO("%s", "Save MatchBox model end!");
+    delete typeFunc;
     return 0;
 }

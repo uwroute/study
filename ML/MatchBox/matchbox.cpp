@@ -161,14 +161,14 @@ void MatchBox::train(const LongMatrixFeature* sample, double label) {
 	const LongMatrixFeature* start = sample;
 	while (sample->index != (uint64_t)-1)
 	{
-		if (sample->type & 2)
+		if (is_bias(sample->type))
 		{
 			Param p = get_w_param(sample->index);
 			p.m *= sample->value;
 			p.v  *= sample->value*sample->value;
 			_b = addGauss(_b, p);
 		}
-		if ( (sample->type & 1) == 0)
+		if ( is_user(sample->type))
 		{
 			for (int i=0; i<_k; ++i)
 			{
@@ -178,7 +178,7 @@ void MatchBox::train(const LongMatrixFeature* sample, double label) {
 				_s[i] = addGauss(_s[i], p);
 			}
 		}
-		else if ( (sample->type & 1) == 1)
+		else if ( is_item(sample->type))
 		{
 			for (int i=0; i<_k; ++i)
 			{
@@ -259,7 +259,7 @@ void MatchBox::train(const LongMatrixFeature* sample, double label) {
 	sample = start;
 	while (sample->index != (uint64_t)-1)
 	{
-		if (sample->type & 2)
+		if (is_bias(sample->type))
 		{
 			Param p = get_w_param(sample->index);
 			Param Up_w;
@@ -270,7 +270,7 @@ void MatchBox::train(const LongMatrixFeature* sample, double label) {
 			p = multGauss(Up_w, p);
 			set_w_param(sample->index, p);
 		}
-		if ( (sample->type & 1)== 0)
+		if ( is_user(sample->type))
 		{
 			for (int i=0; i<_k; ++i)
 			{
@@ -282,7 +282,7 @@ void MatchBox::train(const LongMatrixFeature* sample, double label) {
 				set_user_param(sample->index, i, p);
 			}
 		}
-		else if ( (sample->type & 1) == 1)
+		else if ( is_item(sample->type))
 		{
 			for (int i=0; i<_k; ++i)
 			{
@@ -305,14 +305,14 @@ double MatchBox::predict(const LongMatrixFeature* sample) {
 	// compute (sk->*), (tk->*), (b->+)
 	while (sample->index != (uint64_t)-1)
 	{
-		if (sample->type & 2)
+		if (is_bias(sample->type))
 		{
 			Param p = get_w_param(sample->index);
 			p.m *= sample->value;
 			p.v  *= sample->value*sample->value;
 			_b = addGauss(_b, p);
 		}
-		if ( (sample->type & 1)== 0)
+		if ( is_user(sample->type))
 		{
 			for (int i=0; i<_k; ++i)
 			{
@@ -322,7 +322,7 @@ double MatchBox::predict(const LongMatrixFeature* sample) {
 				_s[i] = addGauss(_s[i], p);
 			}
 		}
-		else if ( (sample->type & 1) == 1)
+		else if (is_item(sample->type))
 		{
 			for (int i=0; i<_k; ++i)
 			{
