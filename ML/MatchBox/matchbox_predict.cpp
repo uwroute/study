@@ -22,7 +22,7 @@ DEFINE_string(model_file, "matchbox.model", "model file");
 DEFINE_string(test_file, "", "test file");
 DEFINE_string(result_file, "", "test result file");
 DEFINE_string(fea_map, "fea_map", "fea_map");
-DEFINE_string(type_func, "prefix", "prefix(prefix=fea>>48), fea");
+DEFINE_string(type_func, "type", "prefix(prefix=fea>>48), fea");
 DEFINE_bool(dynamic,  false, "if dynamic predictor");
 DEFINE_double(sample_rate, 1.0, "sample rate");
 DEFINE_int32(log_level, 2, "LogLevel :"
@@ -57,6 +57,22 @@ public:
 	void set(std::map<int, int>* map)  {_map=map;}
 private:
 	std::map<int, int>* _map;
+};
+
+class typeTypeFunc : public getTypeFunc {
+public:
+	int operator()(LongMatrixFeature& fea)
+	{
+		if (fea.type == 1)
+		{
+			return 3;
+		}
+		if (fea.type == 2)
+		{
+			return 5;
+		}
+		return 0;
+	}
 };
 
 class feaTypeFunc : public getTypeFunc {
@@ -127,6 +143,10 @@ int main(int argc, char** argv)
     else if (FLAGS_type_func == "fea")
     {
     	typeFunc = new feaTypeFunc();
+    }
+    else if (FLAGS_type_func == "type")
+    {
+    	typeFunc = new typeTypeFunc();
     }
     else
     {
