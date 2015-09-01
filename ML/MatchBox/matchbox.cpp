@@ -43,6 +43,8 @@ void MatchBox::init(int k, std::string prior_m, std::string prior_v, double beta
 	Common::splitString(prior_v, prior_v_str, ',');
 	_w_prior.m = atof(prior_m_str[0].c_str());
 	_w_prior.v = atof(prior_v_str[0].c_str());
+	_bias.m = _w_prior.m;
+	_bias.v = _w_prior.v;
 	for (int i=0; i<_k; ++i)
 	{
 		_user_prior[i].m = atof(prior_m_str[1].c_str());
@@ -214,6 +216,7 @@ void MatchBox::train(const LongMatrixFeature* sample, double label) {
 		LOG_WARNING("%s", "Sample has no item feature!");
 	}
 	_b = addGauss(_b, _bias);
+
 	// compute (*->zk) = (zk->+)
 	Param total_z;
 	if (update_user_and_item)
@@ -292,6 +295,7 @@ void MatchBox::train(const LongMatrixFeature* sample, double label) {
 			Up_w.v /= square(sample->value);
 			p = multGauss(Up_w, p);
 			set_w_param(sample->index, p);
+			LOG_DEBUG("fea_idx : %lu, %lf, %lf", sample->index, p.m, p.v);
 		}
 		if ( is_user(sample->type) && update_user_and_item)
 		{
@@ -479,7 +483,8 @@ MatchBox::Param MatchBox::get_user_param(uint64_t idx, int k) {
 		return _user[k][idx];
 	}
 	Param res = _user_prior[k];
-	res.m = gaussrand()*_user_prior[k].v + _user_prior[k].m;
+	res.m = gaussrand()*sqrt(_user_prior[k].v) + _user_prior[k].m;
+	_user[k][idx] = res;
 	LOG_DEBUG("idx : %lu, %d, %lf, %lf", idx, k, res.m, res.v);
 	return res;
 }
@@ -490,6 +495,7 @@ MatchBox::Param MatchBox::get_item_param(uint64_t idx, int k) {
 	}
 	Param res = _item_prior[k];
 	res.m = sqrt(_item_prior[k].v) * gaussrand() + _item_prior[k].m;
+	_item[k][idx] = res;
 	return res;
 }
 
