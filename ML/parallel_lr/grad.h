@@ -43,9 +43,10 @@ private:
     void update_loss();
 private:
     std::unordered_map<int, double> _batch_grads;
-    double _batch_loss
+    double _batch_loss;
     int _batch;
     SampleQueue _queue;
+    
 };
 
 }

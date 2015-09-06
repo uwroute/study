@@ -12,6 +12,7 @@
 #ifndef _READ_H_
 #define _READ_H_
 
+#include <string>
 #include "data.h"
 #include "Common/thread.h"
 #include "Common/lock.h"
@@ -21,9 +22,14 @@ namespace ML{
 
 class ReadThread : public Common::Thread {
 public:
-	
+	ReadThread() {}
+	~ReadThread() {}
+	void add_queue(SampleQueue* p) {_queues.push_back(p);}
+	void load_data(std::string file);
+	virtual void run();
 private:
-
+	DataSet  _data;
+	std::vector<SampleQueue*> _queues;
 };
 
 }

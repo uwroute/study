@@ -136,7 +136,21 @@ void GradCalcThread::clear_state()
 }
 void GradCalcThread::run()
 {
-	
+    while (read_state != OPT_DONE) {
+        // wait for start cond
+        // rcv sample and gard calc
+        while (!_queue.empty() && read_state != READ_DONE)
+        {
+            if (_queue.empty())
+            {
+                // sleep
+            }
+            else
+            {
+                // grad calc
+            }
+        }
+    }
 }
 
 }
