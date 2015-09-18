@@ -60,8 +60,8 @@ void train(const std::string& file, AdPredictor& model)
     {
         sample.clear();
         label = 0.0;
-        uint64_t ret = toSample(line, sample, label);
-        if (ret > 0)
+        int ret = toSample(line, sample, label);
+        if (!ret)
         {
             sample.push_back(end_fea);
             if (label < 0.5 && ( rand()*1.0/RAND_MAX > FLAGS_sample_rate) )

@@ -18,10 +18,11 @@
 #include <string>
 #include <stdint.h>
 #include <unordered_map>
-#include "data/data.h"
+#include "data/data_tpl.hpp"
 
 namespace ML
 {
+typedef Feature<uint64_t, double> LongFeature;
 // using std::tr1::unordered_map
 class AdPredictor {
 public:

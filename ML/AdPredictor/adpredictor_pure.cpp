@@ -3,7 +3,6 @@
 #include <iostream>
 #include <fstream>
 #include "adpredictor.h"
-#include "data/data.h"
 #include "Common/log.h"
 
 // FTRL train params
