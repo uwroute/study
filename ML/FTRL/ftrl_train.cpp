@@ -28,6 +28,7 @@ DEFINE_int32(log_level, 2, "LogLevel :"
 uint32_t log_level = 0;
 
 using namespace ML;
+typedef FTRL::LongFeature LongFeature;
 
 void train(const std::string& file, FTRL& model)
 {
@@ -58,8 +59,8 @@ void train(const std::string& file, FTRL& model)
     {
         sample.clear();
         label = 0.0;
-        uint64_t ret = toSample(line, sample, label);
-        if (ret > 0)
+        int ret = toSample(line, sample, label);
+        if (!ret)
         {
             sample.push_back(end_fea);
             if (label < 0.5 && ( rand()*1.0/RAND_MAX > FLAGS_sample_rate) )

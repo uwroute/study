@@ -6,13 +6,14 @@
 #include <string>
 #include <stdint.h>
 #include <unordered_map>
-#include "data/data.h"
+#include "data/data_tpl.hpp"
 
 namespace ML
 {
 // using std::tr1::unordered_map
 class FTRL {
 public:
+    typedef Feature<uint64_t, double> LongFeature;
     typedef std::unordered_map<uint64_t, double> DoubleHashMap;
     // typedef std::map<uint64_t, double> DoubleHashMap;
 public:

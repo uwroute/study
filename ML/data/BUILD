@@ -20,3 +20,15 @@ cc_binary(
            ],
     optimize = ['O3']
 )
+cc_binary(
+    name = 'load_data_tpl',
+    srcs = [
+        'data_tpl_test.cpp',
+    ],
+    incs = ['../../../ThirdParty/gflags/include/',
+           '../'],
+    deps = ['//study/ML/Common:common',
+            '//ThirdParty/gflags/lib:gflags'
+           ],
+    optimize = ['O3']
+)

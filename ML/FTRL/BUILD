@@ -28,3 +28,4 @@ cc_binary(
            ],
     optimize = ['O3']
 )
+

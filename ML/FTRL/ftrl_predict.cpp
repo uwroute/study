@@ -3,7 +3,6 @@
 #include <iostream>
 #include <fstream>
 #include "ftrl.h"
-#include "data/data.h"
 #include "Common/log.h"
 
 // FTRL train params
@@ -22,6 +21,8 @@ uint32_t log_level = 0;
 
 using namespace ML;
 using namespace std;
+
+typedef FTRL::LongFeature LongFeature;
 
 int main(int argc, char** argv)
 {
@@ -57,8 +58,8 @@ int main(int argc, char** argv)
     {
         sample.clear();
         label = 0.0;
-        uint64_t ret = toSample(line, sample, label);
-        if (ret > 0)
+        int ret = toSample(line, sample, label);
+        if (!ret)
         {
             sample.push_back(end_fea);
             double pre_value = model.predict(&(sample[0]));
