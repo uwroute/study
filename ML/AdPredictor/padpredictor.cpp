@@ -97,7 +97,39 @@ void AdPredictorClient::init(double mean, double variance, double beta, double e
     _params.reserve(max_fea_num);
 }
 
-void AdPredictorSlave::train(LongFeature* sample, double label)
+void AdPredictorClient::update_message(const uint64_t idx, const Message& param)
+{
+    Message new_msg = get_message(idx);
+    new_msg.vMsg += param.vMsg;
+    new_msg.mMsg += param.mMsg;
+    _messages[idx] = new_msg;
+}
+
+Message AdPredictorClient::AdPredictorSlave::get_message(uint64_t idx)
+{
+    Message msg;
+    if (_messages.find(idx) != _messages.end())
+    {
+        return _messages[idx];
+    }
+    return msg;
+}
+
+void AdPredictorClient::set_param(const uint64_t idx, const Param& param)
+{
+    _params[idx] = param;
+}
+
+Param AdPredictorClient::get_param(uint64_t idx)
+{
+    if (_params.find(idx) != _params.end())
+    {
+        return _params[idx];
+    }
+    return _prior_param;
+}
+
+void AdPredictorClient::train(LongFeature* sample, double label)
 {
     if (label < 0.5)
     {
@@ -144,10 +176,10 @@ void AdPredictorSlave::train(LongFeature* sample, double label)
     {
         double mean = _bias_param.m;
         double variance = _bias_param.v;
-        LOG_TRACE("Slave before bias , mean : %lf,  variance : %lf", mean, variance);
+        LOG_TRACE("Client before bias , mean : %lf,  variance : %lf", mean, variance);
 
-        mean += label*_bias*variance/sqrt(total_variance)*v;
-        variance *=  1 - fabs(_bias)*variance/total_variance*w;
+        mean += label*_bias_val*variance/sqrt(total_variance)*v;
+        variance *=  1 - fabs(_bias_val)*variance/total_variance*w;
 
         double rectify_variance = _prior_param.v*variance/( (1-_eps)*_prior_param.v + _eps*variance );
         double rectify_mean = rectify_variance*( (1-_eps)*mean/variance + _eps*_prior_param.m/_prior_param.v );
@@ -161,11 +193,11 @@ void AdPredictorSlave::train(LongFeature* sample, double label)
 	 _bias_param.v = rectify_variance;
         }
         
-        LOG_TRACE("Slave bias , mean : %lf,  variance : %lf", rectify_mean, rectify_variance);
+        LOG_TRACE("Client bias , mean : %lf,  variance : %lf", rectify_mean, rectify_variance);
     }
 }
 
-void AdPredictorSlave::active_mean_variance(const LongFeature* sample, double& total_mean, double& total_variance)
+void AdPredictorClient::active_mean_variance(const LongFeature* sample, double& total_mean, double& total_variance)
 {
     total_mean = 0.0;
     total_variance = 0.0;
@@ -178,43 +210,13 @@ void AdPredictorSlave::active_mean_variance(const LongFeature* sample, double& t
     }
     if (_use_bias)
     {
-        total_mean += _bias_param.m * _bias;
-        total_variance += _bias_param.v * _bias*_bias;
+        total_mean += _bias_param.m * _bias_val;
+        total_variance += _bias_param.v * _bias*_bias_val;
     }
     total_variance += _beta*_beta;
 }
 
-void AdPredictorSlave::update_message(const uint64_t idx, const Message& param)
-{
-	Message new_param = get_message(idx);
-	new_param.vMsg += param.vMsg;
-	new_param.mMsg += param.mMsg;
-	_messages[idx] = new_param;
-}
-Message AdPredictorSlave::AdPredictorSlave::get_message(uint64_t idx)
-{
-	Message msg;
-	if (_messages.find(idx) != _messages.end())
-	{
-		return _messages[idx];
-	}
-	return msg;
-}
-void AdPredictorSlave::set_param(const uint64_t idx, const Param& param)
-{
-	_params[idx] = param;
-}
-Param AdPredictorSlave::get_param(uint64_t idx)
-{
-	if (_params.find(idx) != _params.end())
-	{
-		return _params[idx];
-	}
-	return _prior_param;
-}
-
-
-double AdPredictorSlave::cumulative_probability(double  t, double mean, double variance)
+double AdPredictorClient::cumulative_probability(double  t, double mean, double variance)
 {
     double m = (t - mean);
     if (fabs(m) > 40*sqrt(variance) )
@@ -224,39 +226,14 @@ double AdPredictorSlave::cumulative_probability(double  t, double mean, double v
     return 0.5*(1 + erf( m / sqrt(2*variance) ) );
 }
 
-double AdPredictorSlave::gauss_probability(double t, double mean, double variance)
+double AdPredictorClient::gauss_probability(double t, double mean, double variance)
 {
     const double PI = 3.1415926;
     double m = (t - mean) / sqrt(variance);
     return exp(-m*m/2) / sqrt(2*PI*variance);
 }
 
-void AdPredictorSlave::train(std::string& file)
-{
-	std::ifstream infile(file);
-	if (!infile)
-    	{
-    		LOG_ERROR("Open data file : %s failed!", file.c_str());
-    		return;
-    	}
-    	LongDataSet data;
-    	data.samples.reserve(_mini_batch*100);
-    	data.sample_idx.reserve(_mini_batch);
-    	data.labels.reserve(_mini_batch);
-    	while (!infile.eof())
-    	{
-    		data.samples.clear();
-    		data.sample_idx.clear();
-    		data.labels.clear();
-    		data.sample_num = 0;
-    		data.sample_fea_num = 0;
-    		load_data(infile, data, _mini_batch, 1.0);
-    		train_minibatch(data);
-    	}
-    	infile.close();
-}
-
-void AdPredictorSlave::train_minibatch(LongDataSet& data)
+void AdPredictorClient::train_minibatch(LongDataSet& data)
 {
 	LOG_TRACE("Slave %d Train Mini Data", _seri);
 	Request req;
@@ -283,7 +260,7 @@ void AdPredictorSlave::train_minibatch(LongDataSet& data)
 	LOG_TRACE("Slave %d has update message to master", _seri);
 }
 
-void AdPredictorSlave::form_query_request(LongDataSet& data, Request& req)
+void AdPredictorClient::form_query_request(LongDataSet& data, Request& req)
 {
 	_messages.clear();
 	_bias_message.mMsg = 0.0;
@@ -306,7 +283,7 @@ void AdPredictorSlave::form_query_request(LongDataSet& data, Request& req)
 		}
 	}
 }
-void AdPredictorSlave::form_update_request(Request& req)
+void AdPredictorClient::form_update_request(Request& req)
 {
 	req.type = UPDATE_PARAM;
 	req.messages_idx.push_back(-1);
