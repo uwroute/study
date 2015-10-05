@@ -25,7 +25,6 @@
 
 namespace ML
 {
-
 struct Param {
     Param() : m(0.0), v(0.0) {}
     double m;
@@ -45,13 +44,14 @@ struct UpdateRequest {
 
 struct GetRequest {
     std::vector<uint64_t> idxs;
-}
+};
 
 struct GetResponse {
     std::vector<uint64_t> idxs;
     std::vector<Message> msgs;
 };
 
+// ParameterServer : process update&get from muti client
 class ParameterServer {
 public:
     typedef std::unordered_map<uint64_t, Message> MessageHashMap;
@@ -71,6 +71,7 @@ private:
     Common::RWMutex _rw_mutex;
 };
 
+// AdPredictorClient : compute message of every feature in minibatch data
 class AdPredictorClient {
 public:
     typedef std::unordered_map<uint64_t, Message> MessageHashMap;
@@ -108,15 +109,18 @@ private:
     Param _prior_param;
     double _beta;
     double _eps;
-    double _bias;
+    // bias config
+    uint64_t _bias_idx;
+    double _bias_val;
     bool _use_bias;
 private:
     // ps train param
-    Common::MessageQueue<LongFeaure*>* _rcv_queue;
-    ParameterServer* _ps;
-    int _mini_batch;
-    double _down_sample;
-    bool _is_update;
+    Common::MessageQueue<LongFeaure*>* _rcv_queue;  // interface for get data
+    ParameterServer* _ps; // parameter server
+    int _mini_batch; // train data size
+    double _down_sample; // down sample for negative
+    double _up_sample;  // up sample for positive
+    bool _is_update;  // if update param in minibatch, true is better, but false is good in theory
 private:
     // print param
     int _train_count;
