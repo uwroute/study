@@ -45,8 +45,8 @@ private:
     std::unordered_map<int, double> _batch_grads;
     double _batch_loss;
     int _batch;
-    SampleQueue _queue;
-    
+    int _calc_num;
+    SampleQueue* _queue; 
 };
 
 }

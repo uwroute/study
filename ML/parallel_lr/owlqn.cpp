@@ -19,12 +19,19 @@ namespace ML
 
 void OWLQN::init()
 {
+    if (_N <= 0)
+    {
+        LOG_ERROR("Dim[%d] must be large than 0!", _N);
+        return -1;
+    }
+    // model param
     vector<double> tmp(_N, 0);
     _w.swap(tmp);
     _next_w = _w;
     _dir = _w;
     _grad = _w;
     _next_grad = _w;
+    // LBFGS param
     for (int i=0; i<=_M; ++i)
     {
         _Y.push_back(_w);
@@ -34,9 +41,11 @@ void OWLQN::init()
     _sy.resize(_M+1);
     _start = 0;
     _end = 0;
+    // train control param
     _cur_iter = 0;
+    return 0;
 }
-
+// util function
 double OWLQN::dotProduct(vector<double>& x, vector<double>& y)
 {
     double value = 0.0;
@@ -88,10 +97,6 @@ void OWLQN::scaleInto(vector<double>& out, const vector<double>& x, const double
 
 bool OWLQN::checkEnd()
 {
-    if (_cur_iter == 0)
-    {
-        _model->grad_and_loss(_w, *_data, _grad, _loss);
-    }
     double value = dotProduct(_grad, _grad);
     LOG_INFO("grad : %lf, dst : %lf", value, _error);
     if (_cur_iter > 0 && value < _error)
@@ -101,13 +106,52 @@ bool OWLQN::checkEnd()
     return false;
 }
 
+void OWLQN::calc_grad()
+{
+    grad_status.set_state(CALC_GRAD);
+    grad_status.init_done_num();
+    read_status.set_state(READ_START);
+    while (grad_status.done_num() != GRAD_THREAD_NUM)
+    {
+        usleep(1);
+    }
+    read_status.set_state(READ_IDLE);
+    grad_status.set_state(CALC_IDLE);
+}
+
+void OWLQN::calc_loss()
+{
+    grad_status.set_state(CALC_LOSS);
+    grad_status.init_done_num();
+    read_status.set_state(READ_START);
+    while (grad_status.done_num() != GRAD_THREAD_NUM)
+    {
+        usleep(1);
+    }
+    read_status.set_state(READ_IDLE);
+    grad_status.set_state(CALC_IDLE);
+}
+
+void OWLQN::calc_grad_and_loss()
+{
+    grad_status.set_state(CALC_GRAD_AND_LOSS);
+    grad_status.init_done_num();
+    read_status.set_state(READ_START);
+    while (grad_status.done_num() != GRAD_THREAD_NUM)
+    {
+        usleep(1);
+    }
+    read_status.set_state(READ_IDLE);
+    grad_status.set_state(CALC_IDLE);
+}
+
 void OWLQN::optimize()
 {
     // compute dir
     // compute grad
+    calc_grad_and_loss();
     while (_cur_iter < _max_iter)
     {
-        LOG_INFO("-------------Iter %d start!----------------", _cur_iter);
         if (checkEnd())
         {
             LOG_INFO("Train finished After Iter %d!", _cur_iter);
@@ -135,6 +179,7 @@ void OWLQN::updateDir()
     LOG_DEBUG("%s", "Update Dir End!");
 }
 
+// compute dir = -grad with l1
 void OWLQN::makeSteepestDescDir()
 {
 	if (_l1 > MinDoubleValue)
@@ -183,6 +228,7 @@ void OWLQN::makeSteepestDescDir()
 
 void OWLQN::mapDirByInverseHessian()
 {
+    // has no history info, dir = steepest_dir
     if (_cur_iter == 0)
     {
         return;
@@ -259,17 +305,28 @@ void OWLQN::getNextPoint(double alpha) {
 	}
 }
 
-double OWLQN::l1Loss()
+double OWLQN::l1Loss(const vector<double>& w, const double loss)
 {
-	double loss = 0.0;
-    _model->grad_and_loss(_next_w, *_data, _next_grad, loss);
+	double l1Loss = loss;
 	if (_l1 > MinDoubleValue)
 	{
 		for (size_t i=0; i<_N; i++) {
-			loss += fabs(_next_w[i])*_l1;
+			l1Loss += fabs(w[i])*_l1;
 		}
 	}
-	return loss;
+	return l1Loss;
+}
+
+double OWLQN::l2Loss(const vector<double>& w, const double loss)
+{
+    double l2Loss = loss;
+    if (_l2 > MinDoubleValue)
+    {
+        for (size_t i=0; i<_N; i++) {
+            l2Loss += w[i]*w[i]*_l2*0.5;
+        }
+    }
+    return l2Loss;
 }
 
 void OWLQN::linearSearch()
@@ -299,6 +356,8 @@ void OWLQN::linearSearch()
 	while (true) {
         LOG_INFO("Linear search step : %lf", alpha);
 		getNextPoint(alpha);
+        double sample_loss = 0.0;
+        calc_loss();
 		value = l1Loss();
         LOG_DEBUG("Linear search value : %lf, old_value : %lf", value, oldValue);
 		if (value <= oldValue + p * descDir * alpha) break;

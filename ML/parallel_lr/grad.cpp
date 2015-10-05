@@ -136,20 +136,35 @@ void GradCalcThread::clear_state()
 }
 void GradCalcThread::run()
 {
-    while (read_state != OPT_DONE) {
+    while (opt_status != OPT_DONE) {
         // wait for start cond
         // rcv sample and gard calc
-        while (!_queue.empty() && read_state != READ_DONE)
+        while (!_queue->empty() && read_state != READ_DONE)
         {
-            if (_queue.empty())
+            if (_queue->empty())
             {
-                // sleep
+                usleep(1);
             }
             else
             {
-                // grad calc
+                Sample cur_sample = _queue->pop();
+                switch (grad_status)
+                {
+                    case CALC_IDLE:
+                        break;
+                    case CALC_GRAD:
+                        calc_grad(cur_sample.x, cur_sample.y);
+                        break;
+                    case CALC_LOSS:
+                        calc_loss(cur_sample.x, cur_sample.y);
+                        break;
+                    case CALC_GRAD_AND_LOSS:
+                        calc_grad_and_loss(cur_sample.x, cur_sample.y);
+                        break;
+                }
             }
         }
+        grad_status.add_done_num();
     }
 }
 

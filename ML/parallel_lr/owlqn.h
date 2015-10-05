@@ -13,6 +13,7 @@
 #define _OWLQN_H_
 
 #include <vector>
+#include <deque>
 #include <string>
 #include <iostream>
 
@@ -20,6 +21,21 @@ namespace ML
 {
 
 using std::vector;
+
+struct ParamSet {
+public:
+    vector<double> w;
+    vector<double> next_w;
+    vector<double> grad;
+    vector<double> next_grad;
+    double loss;
+    double next_loss;
+public:
+    
+private:
+    pthread_rwlock_t _m_rw_mutex;
+    RWMutex _rw_mutex;
+};
 
 class OWLQN : public Common::Thread
 {
@@ -34,8 +50,10 @@ class OWLQN : public Common::Thread
         void set_m(int m) {_M = m;}
         void set_error(double e) {_error=e;}
         void set_dim(int dim) {_N = dim;}
-        void init();
+        int init();
         int caluc_space();
+    public:
+        void run();
     private:
         void makeSteepestDescDir(); // -grad dir
         void mapDirByInverseHessian(); // -Hk+1*grad
@@ -44,7 +62,8 @@ class OWLQN : public Common::Thread
         double checkDir();  // _dir should be desc dir
         void linearSearch();
         void shiftState();
-        double l1Loss();
+        double l1Loss(const vector<double>& w, const double loss);
+        double l2loss(const vector<double>& w, const double loss);
         void getNextPoint(double alpha);
         bool checkEnd();
     private:
@@ -63,7 +82,7 @@ class OWLQN : public Common::Thread
         vector<double> _dir;
         vector<double> _grad;
         vector<double> _next_grad;
-        vector<double>& _steepest_dir;
+        vector<double>& _steepest_dir; // shared with next_grad, because of then can't exist in same times
         double _loss;
         // S,Y in LBFGS
         vector<double> _alpha;
@@ -74,9 +93,6 @@ class OWLQN : public Common::Thread
         vector<vector<double> > _S;
         int _start;
         int _end;
-        // Model : such as logistics, linear
-        Model* _model;
-        DataSet* _data;
         // overfit
         double _l1;
         double _l2;
