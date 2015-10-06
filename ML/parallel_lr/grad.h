@@ -24,14 +24,18 @@ class GradCalcThread : public Common::Thread
 {
 public:
     // function for predict
-    GradCalcThread() : _batch(1) {}
+    GradCalcThread() : _batch(1), _queue(NULL) {}
     ~GradCalcThread() {}
     virtual void run();
-    // function for opt
+    void set_queue(SampleQueue* q) {_queue = q;}
+    // function
     void calc_grad(const Feature* sample, double label);
     void calc_loss(const Feature* sample, double label);
     void calc_grad_and_loss(const Feature* sample, double label);
     void update_batch_grad();
+    void update_batch_next_grad();
+    void update_loss();
+    void update_next_loss();
     void clear_state();
 private:
     double wx(const Feature* sample);
@@ -39,8 +43,6 @@ private:
     double predict(const Feature* sample);
     double predict(const double wx);
     double get_w(int i);
-    void update_grad(int i, double grad);
-    void update_loss();
 private:
     std::unordered_map<int, double> _batch_grads;
     double _batch_loss;

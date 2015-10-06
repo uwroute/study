@@ -40,6 +40,35 @@ private:
     std::deque<T> _queue;
     size_t _size;
 };
+// MsgQueue when elem is vector, use swap instead copy
+template<class T>
+class VectorMessageQueue {
+public:
+    VectorMessageQueue() : _mutex(_m_mutex), _size(0) {}
+    void pop(T& res) {
+        Lock lock(_mutex);
+        res.swap(_queue.front());
+        _queue.pop_front();
+        _size--;
+        return tmp;
+    }
+    void push(T& elem) {
+        Lock lock(_mutex);
+        T e;
+        _queue.push_back(e);
+        _queue.back().swap(elem);
+        _size++;
+    }
+    size_t size() {
+        return _size;
+    }
+private:
+    pthread_mutex_t _m_mutex;
+    Mutex _mutex;
+    std::deque<T> _queue;
+    size_t _size;
+};
+
 }
 
 #endif

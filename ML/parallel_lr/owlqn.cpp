@@ -14,6 +14,10 @@
 #include "Common/log.h"
 #include <math.h>
 
+extern OptState opt_status;
+extern ReadThreadStatus read_status;
+extern GradThreadStatus grad_statue;
+
 namespace ML
 {
 
@@ -24,7 +28,6 @@ void OWLQN::init()
         LOG_ERROR("Dim[%d] must be large than 0!", _N);
         return -1;
     }
-    // model param
     vector<double> tmp(_N, 0);
     _w.swap(tmp);
     _next_w = _w;
@@ -38,6 +41,7 @@ void OWLQN::init()
         _S.push_back(_w);
     }
     _alpha.resize(_M+1);
+    _beta = 0.0;
     _sy.resize(_M+1);
     _start = 0;
     _end = 0;
@@ -95,6 +99,41 @@ void OWLQN::scaleInto(vector<double>& out, const vector<double>& x, const double
     }
 }
 
+void l2grad(const vector<double>& w, vector<double>& grad)
+{
+    if (_l2 > MinDoubleValue)
+    {
+        for (size_t i=0; i<_N; ++i)
+        {
+            grad[i] += _l2*w[i];
+        }
+    }
+}
+
+double OWLQN::l1Loss(const vector<double>& w, const double loss)
+{
+    double l1Loss = loss;
+    if (_l1 > MinDoubleValue)
+    {
+        for (size_t i=0; i<_N; i++) {
+            l1Loss += fabs(w[i])*_l1;
+        }
+    }
+    return l1Loss;
+}
+
+double OWLQN::l2Loss(const vector<double>& w, const double loss)
+{
+    double l2Loss = loss;
+    if (_l2 > MinDoubleValue)
+    {
+        for (size_t i=0; i<_N; i++) {
+            l2Loss += w[i]*w[i]*_l2*0.5;
+        }
+    }
+    return l2Loss;
+}
+
 bool OWLQN::checkEnd()
 {
     double value = dotProduct(_grad, _grad);
@@ -106,35 +145,9 @@ bool OWLQN::checkEnd()
     return false;
 }
 
-void OWLQN::calc_grad()
+void OWLQN::calc(GradThreadState grad_state)
 {
-    grad_status.set_state(CALC_GRAD);
-    grad_status.init_done_num();
-    read_status.set_state(READ_START);
-    while (grad_status.done_num() != GRAD_THREAD_NUM)
-    {
-        usleep(1);
-    }
-    read_status.set_state(READ_IDLE);
-    grad_status.set_state(CALC_IDLE);
-}
-
-void OWLQN::calc_loss()
-{
-    grad_status.set_state(CALC_LOSS);
-    grad_status.init_done_num();
-    read_status.set_state(READ_START);
-    while (grad_status.done_num() != GRAD_THREAD_NUM)
-    {
-        usleep(1);
-    }
-    read_status.set_state(READ_IDLE);
-    grad_status.set_state(CALC_IDLE);
-}
-
-void OWLQN::calc_grad_and_loss()
-{
-    grad_status.set_state(CALC_GRAD_AND_LOSS);
+    grad_status.set_state(grad_state);
     grad_status.init_done_num();
     read_status.set_state(READ_START);
     while (grad_status.done_num() != GRAD_THREAD_NUM)
@@ -149,7 +162,11 @@ void OWLQN::optimize()
 {
     // compute dir
     // compute grad
-    calc_grad_and_loss();
+    calc(CALC_GRAD_AND_LOSS);
+    // skip for first, because w = 0 at begin
+    // l2grad(_w, _grad);
+    // _loss = l2Loss(_w, _loss);
+    // _loss = l1Loss(_w, _loss);
     while (_cur_iter < _max_iter)
     {
         if (checkEnd())
@@ -157,7 +174,13 @@ void OWLQN::optimize()
             LOG_INFO("Train finished After Iter %d!", _cur_iter);
             break;
         }
+        LOG_INFO("-------------Iter %d start!------------------", _cur_iter);
         LOG_INFO("Loss : %lf", _loss);
+        if (_cur_iter > 0)
+        {
+            calc(CALC_GRAD);
+            l2grad(_w, _grad);
+        }
         updateDir(); // parallel
         linearSearch(); // parallel
         shiftState(); // single
@@ -305,30 +328,6 @@ void OWLQN::getNextPoint(double alpha) {
 	}
 }
 
-double OWLQN::l1Loss(const vector<double>& w, const double loss)
-{
-	double l1Loss = loss;
-	if (_l1 > MinDoubleValue)
-	{
-		for (size_t i=0; i<_N; i++) {
-			l1Loss += fabs(w[i])*_l1;
-		}
-	}
-	return l1Loss;
-}
-
-double OWLQN::l2Loss(const vector<double>& w, const double loss)
-{
-    double l2Loss = loss;
-    if (_l2 > MinDoubleValue)
-    {
-        for (size_t i=0; i<_N; i++) {
-            l2Loss += w[i]*w[i]*_l2*0.5;
-        }
-    }
-    return l2Loss;
-}
-
 void OWLQN::linearSearch()
 {
     // check is _dir down dir, so Hk+1 should be positive
@@ -350,15 +349,16 @@ void OWLQN::linearSearch()
     }
 
 	const double p = 1e-4;
-	double oldValue = _loss;
-    double& value = _loss;
+	double& oldValue = _loss;
+    double& value = _next_loss;
 
 	while (true) {
         LOG_INFO("Linear search step : %lf", alpha);
 		getNextPoint(alpha);
         double sample_loss = 0.0;
-        calc_loss();
-		value = l1Loss();
+        calc(CALC_NEXT_LOSS);
+        value = l2Loss(_next_w, value);
+		value = l1Loss(_next_w, value);
         LOG_DEBUG("Linear search value : %lf, old_value : %lf", value, oldValue);
 		if (value <= oldValue + p * descDir * alpha) break;
 
@@ -376,7 +376,9 @@ void OWLQN::shiftState()
     _sy[_end] = dotProduct(_S[_end], _Y[_end]);
 
     _w.swap(_next_w);
-    _grad.swap(_next_grad);
+    _loss = _next_loss;
+    _next_loss = 0.0;
+    // _grad.swap(_next_grad); // open when linear search with Wolf Condition
 
     _end = (_end+1) % _M;
     if (_cur_iter >= _M)

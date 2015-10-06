@@ -18,7 +18,10 @@ enum GradThreadState {
 	CALC_IDLE = 0，
     CALC_GRAD,
     CALC_LOSS,
-    CALC_GRAD_AND_LOSS
+    CALC_GRAD_AND_LOSS,
+    CALC_NEXT_GRAD,
+    CALC_NEXT_LOSS,
+    CALC_NEXT_GRAD_AND_LOSS,
 };
 
 enum OptState {
@@ -58,13 +61,7 @@ public:
 	ReadThreadState get_state() {return _state;}
 private:
 	ReadThreadState _state;
-	pthread_mutex_t _m_mutex;
-	Mutex _mutex;
 };
-
-extern OptState opt_status;
-extern ReadThreadStatus read_status;
-extern GradThreadStatus grad_statue;
 
 
 #endif  // _STATE_H_

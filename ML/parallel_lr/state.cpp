@@ -10,3 +10,15 @@
 #
 =============================================================================*/
 
+#include "state.h"
+
+void GradThreadStatus::add_done_num()
+{
+	Lock lock(_mutex);
+	_done_num++;
+}
+void GradThreadStatus::init_done_num()
+{
+	Lock lock(_mutex);
+	_done_num=0;
+}

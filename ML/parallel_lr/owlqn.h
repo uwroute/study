@@ -22,8 +22,10 @@ namespace ML
 
 using std::vector;
 
+// 0 idx is bias
 struct ParamSet {
 public:
+    size_t N;
     vector<double> w;
     vector<double> next_w;
     vector<double> grad;
@@ -31,7 +33,25 @@ public:
     double loss;
     double next_loss;
 public:
-    
+    // get
+    double get_w_nolock(int i) {return w[i];}
+    double get_next_w_nolock(int i) {return next_w[i];}
+    double get_bias_w_nolock() {return w[0];}
+    double get_next_bias_w_nolock() {return next_w[0];}
+    // update
+    void update_grad(int i, double g) {grad[i] += g;}
+    void update_batch_grad(std::unordered_map<int, double> batch_grads);
+    void update_next_grad(int i, double g) {next_grad[i] += g;}
+    void update_batch_next_grad();
+    void update_loss(double l) {loss+=l;}
+    void update_next_loss(double l) {next_loss+=l;}
+    // clear
+    void clear_w() {}
+    void clear_next_w() {}
+    void clear_grad() {}
+    void clear_next_grad() {}
+    void clear_loss() {loss=0.0;}
+    void clear_next_loss() {next_loss=0.0;}
 private:
     pthread_rwlock_t _m_rw_mutex;
     RWMutex _rw_mutex;
@@ -40,7 +60,8 @@ private:
 class OWLQN : public Common::Thread
 {
     public:
-        OWLQN():_steepest_dir(_next_grad){}
+        OWLQN(ParamSet& param): _N(param.N), _w(param.w), _next_w(param.next_w), _grad(param.grad), _next_grad(param.next_grad), 
+            _steepest_dir(_next_grad), _loss(param.loss), _next_loss(param.next_loss) {}
         ~OWLQN(){}
     public:
         void optimize();
@@ -52,6 +73,7 @@ class OWLQN : public Common::Thread
         void set_dim(int dim) {_N = dim;}
         int init();
         int caluc_space();
+        void save_model(std::string& model_file);
     public:
         void run();
     private:
@@ -62,9 +84,10 @@ class OWLQN : public Common::Thread
         double checkDir();  // _dir should be desc dir
         void linearSearch();
         void shiftState();
+        void getNextPoint(double alpha);
+        void l2grad(const vector<double>& w, vector<double>& grad);
         double l1Loss(const vector<double>& w, const double loss);
         double l2loss(const vector<double>& w, const double loss);
-        void getNextPoint(double alpha);
         bool checkEnd();
     private:
         double dotProduct(vector<double>& x, vector<double>& y);
@@ -75,15 +98,16 @@ class OWLQN : public Common::Thread
         void scaleInto(vector<double>& out, const vector<double>& x, const double scale);
     private:
         // current param
-        size_t _N;
-        vector<double> _w;
-        vector<double> _next_w;
+        size_t& _N;
+        vector<double>& _w;
+        vector<double>& _next_w;
         // current dir
-        vector<double> _dir;
-        vector<double> _grad;
-        vector<double> _next_grad;
+        vector<double>& _grad;
+        vector<double>& _next_grad;
         vector<double>& _steepest_dir; // shared with next_grad, because of then can't exist in same times
-        double _loss;
+        vector<double> _dir;
+        double& _loss;
+        double& _next_loss;
         // S,Y in LBFGS
         vector<double> _alpha;
         double _beta;

@@ -13,6 +13,10 @@
 #include "read.h"
 #include "state.h"
 
+extern OptState opt_status;
+extern ReadThreadStatus read_status;
+extern GradThreadStatus grad_statue;
+
 namespace ML{
 
 int ReadThread::load_data(std::string file) {
@@ -50,8 +54,6 @@ void ReadThread::run() {
 				usleep(1);
 				break;
 		}
-		// trans data
-		read_state = END_READ;
 	}
 }
 
