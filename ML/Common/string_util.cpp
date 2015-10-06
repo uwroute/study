@@ -47,7 +47,7 @@ uint64_t toSample(const std::string& line, std::map<uint64_t, double>& sample, d
     {
         uint64_t k = 0;
         double v = 0.0;
-        if (sscanf(vec[i].c_str(), "%lu:%lf", &k, &v))
+        if (sscanf(vec[i].c_str(), "%llu:%lf", &k, &v))
         {
             sample[k-1] = v;
         }
@@ -74,7 +74,7 @@ uint64_t toSample(const std::string& line, std::vector<Feature>& sample, double&
     for (size_t i=1; i<vec.size(); ++i)
     {
         Feature fea;
-        if (sscanf(vec[i].c_str(), "%lu:%lf", &(fea.index), &(fea.value)))
+        if (sscanf(vec[i].c_str(), "%llu:%lf", &(fea.index), &(fea.value)))
         {
             sample.push_back(fea);
         }
@@ -104,7 +104,7 @@ uint64_t toSample(const std::string& line, Feature* sample, double* label)
     Feature* fea = sample;
     for (size_t i=1; i<vec.size(); ++i)
     {
-        if (!sscanf(vec[i].c_str(), "%lu:%lf", &(fea->index), &(fea->value)))
+        if (!sscanf(vec[i].c_str(), "%llu:%lf", &(fea->index), &(fea->value)))
         {
             continue;
         }
