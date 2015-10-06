@@ -13,11 +13,11 @@
 #define _STRING_UTIL_H_
 
 #include <cstdio>
-#include <stdint.h>
 #include <vector>
 #include <string>
 #include <map>
 #include <algorithm>
+#include "type.h"
 
 namespace Common
 {
