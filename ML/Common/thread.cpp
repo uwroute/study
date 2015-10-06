@@ -33,7 +33,7 @@ int Thread::start() {
 
 void Thread::join() {
 	if (_tid > 0) {
-		LOG_DEBUG("tid : %lu", (uint64_t)_tid);
+		LOG_DEBUG("tid : %" PRIu64 "", (uint64_t)_tid);
 		pthread_join(_tid, NULL);
 	}
 }
