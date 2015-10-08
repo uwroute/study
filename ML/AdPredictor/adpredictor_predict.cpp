@@ -12,6 +12,7 @@ DEFINE_string(result_file, "", "test result file");
 DEFINE_bool(dynamic,  false, "if dynamic predictor");
 DEFINE_bool(use_ee,  false, "if use ee");
 DEFINE_double(sample_rate, 1.0, "sample rate");
+DEFINE_int32(pos_weight, 1, "pos weight");
 DEFINE_int32(log_level, 2, "LogLevel :"
     "0 : TRACE "
     "1 : DEBUG "
@@ -72,7 +73,17 @@ int main(int argc, char** argv)
             {
                 if (label > 0.5 || (label < 0.5 && ( rand()*1.0/RAND_MAX < FLAGS_sample_rate) ) )
                 {
-                    model.train(&(sample[0]), label);
+                    if (label > 0.5)
+                    {
+                        for (int i=0; i<FLAGS_pos_weight; ++i)
+                        {
+                            model.train(&(sample[0]), label);
+                        }
+                    }
+                    else
+                    {
+                        model.train(&(sample[0]), label);
+                    }
                 }
             }
             ofile << label << " " << pre_value << endl;

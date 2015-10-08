@@ -50,7 +50,6 @@ public:
         res.swap(_queue.front());
         _queue.pop_front();
         _size--;
-        return tmp;
     }
     void push(T& elem) {
         Lock lock(_mutex);

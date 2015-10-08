@@ -18,6 +18,7 @@ DEFINE_double(eps, 0.0, "eps");
 DEFINE_int32(max_fea_num, 1000*10000, "fea num");
 DEFINE_int32(max_iter, 1, "max iter");
 DEFINE_double(sample_rate, 1.0, "sample rate");
+DEFINE_int32(pos_weight, 1, "pos weight");
 DEFINE_bool(use_bias,  true, "if use bias");
 DEFINE_double(bias, 1.0, "bias value");
 DEFINE_int32(line_step, 100000, "log line step");
@@ -69,7 +70,16 @@ void train(const std::string& file, AdPredictor& model)
                    getline(infile, line);
                    continue;
             }
-            model.train(&(sample[0]), label);
+            if (label > 0.5)
+            {
+                for (int i=0; i<FLAGS_pos_weight; ++i)
+                {
+                    model.train(&(sample[0]), label);
+                }
+            }
+            else {
+                model.train(&(sample[0]), label);
+            }
             line_count ++;
             if (line_count%FLAGS_line_step == 0)
             {
