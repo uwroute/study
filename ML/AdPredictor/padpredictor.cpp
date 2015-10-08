@@ -79,7 +79,7 @@ void ParameterServer::save_params(std::ofstream& out_file)
     }
 }
 
-void AdPredictorClient::init(double mean, double variance, double beta, double eps, int mini_batch, size_t max_fea_num, bool use_bias, double down_sample, bool update)
+void AdPredictorClient::init(double mean, double variance, double beta, double eps, int mini_batch, size_t max_fea_num, uint64_t _bias_idx, bool use_bias, double down_sample, int up_sample, bool update)
 {
     // model param
     _prior_param.m = mean;
@@ -89,10 +89,14 @@ void AdPredictorClient::init(double mean, double variance, double beta, double e
     _bias_param.v = _prior_param.v;
     _beta = beta;
     _eps = eps;
+    // bias
+    _bias_idx = bias_idx;
+    _user_bias = use_bias;
     // ps train param
     _down_sample = down_sample;
+    _up_sample = up_sample;
     _is_update = update;
-    _mini_batch = mini_batch;
+    // param
     _messages.reserve(max_fea_num);
     _params.reserve(max_fea_num);
 }
@@ -240,35 +244,49 @@ void AdPredictorClient::train_minibatch(LongDataSet& data)
 	Response res;
 	form_query_request(data, req);
 	LOG_TRACE("Slave %d get message from master", _seri);
-	_p_master->get_message(req, res);
+	_ps->get(req, res);
 	update_param(res);
 	LOG_TRACE("Slave %d has get message from master", _seri);
 	req.clear();
 	for (int i=0; i<data.sample_num; ++i)
 	{
 		LongFeature* sample = &(data.samples[data.sample_idx[i]]);
-		_train_count ++;
-		if (_train_count%100000 == 0)
+		if (data.labels[i] > 0.5 && _up_sample > 1)
 		{
-			LOG_INFO("Slave %d train %d samples!", _seri, _train_count-1);
+			for (int k=0; k<_up_sample; ++k)
+			{
+				train(sample, data.labels[i]);
+			}
 		}
-		train(sample, data.labels[i]);
+		else if (data.labels[i] < 0.0)
+		{
+			if (rand()%RAND_MAX < _down_sample)
+			{
+				train(sample, data.labels[i]);
+			}
+		}
+		else
+		{
+			train(sample, data.labels[i]);
+		}
 	}
 	form_update_request(req);
 	LOG_TRACE("Slave %d update message to master", _seri);
-	_p_master->update_message(req);
+	_ps->update(req);
 	LOG_TRACE("Slave %d has update message to master", _seri);
 }
 
-void AdPredictorClient::form_query_request(LongDataSet& data, Request& req)
+void AdPredictorClient::form_get_request(LongDataSet& data, GetRequest& req)
 {
 	_messages.clear();
 	_bias_message.mMsg = 0.0;
 	_bias_message.vMsg = 0.0;
 	_params.clear();
 	_bias_param = _prior_param;
-	req.messages_idx.push_back(-1);
-	req.type = UPDATE_PARAM;
+	if (_use_bias)
+	{
+		req.messages_idx.push_back(_bias_idx);
+	}
 	for (int i=0; i<data.sample_num; ++i)
 	{
 		LongFeature* sample = &(data.samples[data.sample_idx[i]]);
@@ -277,36 +295,43 @@ void AdPredictorClient::form_query_request(LongDataSet& data, Request& req)
 			if (_params.find(sample->index) == _params.end())
 			{
 				_params[sample->index] = _prior_param;
-				req.messages_idx.push_back(sample->index);
+				req.idxs.push_back(sample->index);
 			}
 			sample++;
 		}
 	}
 }
-void AdPredictorClient::form_update_request(Request& req)
+void AdPredictorClient::form_update_request(UpdateRequest& req)
 {
-	req.type = UPDATE_PARAM;
-	req.messages_idx.push_back(-1);
-	req.messages_val.push_back(_bias_message);
+	if (_use_bias)
+	{
+		req.idxs.push_back(_bias_idx);
+		req.msgs.push_back(_bias_message);
+	}
 	LOG_TRACE("bias msg : idx=%lu, mMsg=%lf, vMsg=%lf", req.messages_idx[0], req.messages_val[0].mMsg, req.messages_val[0].vMsg);
 	for (MessageHashMap::iterator iter=_messages.begin(); iter!=_messages.end(); ++iter)
 	{
-		req.messages_idx.push_back(iter->first);
-		req.messages_val.push_back(iter->second);
+		req.idxs.push_back(iter->first);
+		req.msgs.push_back(iter->second);
 		LOG_TRACE("msg : idx=%lu, mMsg=%lf, vMsg=%lf", iter->first, iter->second.mMsg, iter->second.vMsg);
 	}
 }
-void AdPredictorSlave::update_param(Response& res)
+void AdPredictorSlave::update_param(GetResponse& res)
 {
-	_bias_param.v = 1.0/res.messages_val[0].vMsg;
-	_bias_param.m = _bias_param.v*res.messages_val[0].mMsg;
-	LOG_TRACE("update bias : m=%lf, v=%lf", _bias_param.m, _bias_param.v);
-	for (size_t i=1; i<res.messages_idx.size(); ++i)
+	for (size_t i=0; i<res.idxs.size(); ++i)
 	{
 		Param cur_param;
 		cur_param.v = 1.0/res.messages_val[i].vMsg;
 		cur_param.m = res.messages_val[i].mMsg*cur_param.v;
-		set_param(res.messages_idx[i], cur_param);
+		if (res.idxs[i] == _bias_idx)
+		{
+			_bias_param = cur_param;
+			LOG_TRACE("update bias : m=%lf, v=%lf", _bias_param.m, _bias_param.v);
+		}
+		else
+		{
+			set_param(res.messages_idx[i], cur_param);
+		}
 	}
 }
 

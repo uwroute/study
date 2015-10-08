@@ -111,20 +111,13 @@ private:
     double _eps;
     // bias config
     uint64_t _bias_idx;
-    double _bias_val;
     bool _use_bias;
 private:
     // ps train param
-    Common::MessageQueue<LongFeaure*>* _rcv_queue;  // interface for get data
     ParameterServer* _ps; // parameter server
-    int _mini_batch; // train data size
     double _down_sample; // down sample for negative
-    double _up_sample;  // up sample for positive
+    int _up_sample;  // up sample for positive
     bool _is_update;  // if update param in minibatch, true is better, but false is good in theory
-private:
-    // print param
-    int _train_count;
-    int _seri;
 };
 
 }
