@@ -22,6 +22,8 @@
 #include "Common/lock.h"
 #include "Common/msg_queue.h"
 
+namespace ML {
+
 using std::vector;
 
 struct Feature
@@ -52,5 +54,7 @@ typedef Common::MessageQueue<Sample> SampleQueue;
 int toSample(const std::string& line, std::vector<Feature>& sample, double& label);
 int load_data(const std::string& file, DataSet& data, bool is_compute_space = true);
 int calc_data_space(const std::string& file, DataSet& data);
+
+}
 
 #endif  // _DATA_H_

@@ -15,7 +15,11 @@
 #include <vector>
 #include <deque>
 #include <string>
+#include <unordered_map>
 #include <iostream>
+#include "Common/thread.h"
+#include "Common/lock.h"
+#include "state.h"
 
 namespace ML
 {
@@ -33,16 +37,17 @@ public:
     double loss;
     double next_loss;
 public:
+    ParamSet() : _rw_mutex(_m_rw_mutex) {}
     // get
-    double get_w_nolock(int i) {return w[i];}
-    double get_next_w_nolock(int i) {return next_w[i];}
-    double get_bias_w_nolock() {return w[0];}
-    double get_next_bias_w_nolock() {return next_w[0];}
+    double get_w(int i) {return w[i];}
+    double get_next_w(int i) {return next_w[i];}
+    double get_bias_w() {return w[0];}
+    double get_next_bias_w() {return next_w[0];}
     // update
     void update_grad(int i, double g) {grad[i] += g;}
     void update_batch_grad(std::unordered_map<int, double> batch_grads);
     void update_next_grad(int i, double g) {next_grad[i] += g;}
-    void update_batch_next_grad();
+    void update_batch_next_grad(std::unordered_map<int, double> batch_grads);
     void update_loss(double l) {loss+=l;}
     void update_next_loss(double l) {next_loss+=l;}
     // clear
@@ -54,7 +59,7 @@ public:
     void clear_next_loss() {next_loss=0.0;}
 private:
     pthread_rwlock_t _m_rw_mutex;
-    RWMutex _rw_mutex;
+    Common::RWMutex _rw_mutex;
 };
 
 class OWLQN : public Common::Thread
@@ -85,9 +90,10 @@ class OWLQN : public Common::Thread
         void linearSearch();
         void shiftState();
         void getNextPoint(double alpha);
+        void calc(GradThreadState grad_state);
         void l2grad(const vector<double>& w, vector<double>& grad);
         double l1Loss(const vector<double>& w, const double loss);
-        double l2loss(const vector<double>& w, const double loss);
+        double l2Loss(const vector<double>& w, const double loss);
         bool checkEnd();
     private:
         double dotProduct(vector<double>& x, vector<double>& y);

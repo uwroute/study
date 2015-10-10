@@ -19,6 +19,7 @@
 
 namespace ML
 {
+
 using std::ifstream;
 
 void splitString(const std::string& in, std::vector<std::string>& out, char s)
@@ -82,10 +83,13 @@ int load_data(const std::string& file, DataSet& data, bool is_compute_space)
         return -1;
     }
     // load data
+    std::string line;
     getline(infile, line);
     Feature end_fea;
     end_fea.index = -1;
     end_fea.value = 0.0;
+    std::vector<Feature> sample;
+    double label = 0.0;
     while (!infile.eof())
     {
         sample.clear();
@@ -136,11 +140,11 @@ int calc_data_space(const std::string& file, DataSet& data)
         }
         getline(infile, line);
     }
-    LOG_INFO("Compute Space : Sample Fea Num = %d", data.sample_fea_num);
+    LOG_INFO("Compute Space : Sample Fea Num = %lu", data.sample_fea_num);
     LOG_INFO("Compute Space : Sample Num = %d", data.sample_num);
     LOG_INFO("Compute Space : Max Fea Num = %d", data.max_fea_num);
     infile.close();
-    return data.feature_fea_num*sizeof(Feature) + data.sample_num*(sizeof(int) + sizeof(double));
+    return data.sample_fea_num*sizeof(Feature) + data.sample_num*(sizeof(int) + sizeof(double));
 }
 
 }

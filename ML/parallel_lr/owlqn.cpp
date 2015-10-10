@@ -13,19 +13,23 @@
 #include "owlqn.h"
 #include "Common/log.h"
 #include <math.h>
+#include <unistd.h>
 
-extern OptState opt_status;
-extern ReadThreadStatus read_status;
-extern GradThreadStatus grad_statue;
+#define MinDoubleValue 1.0e-10
+extern int GRAD_THREAD_NUM;
 
 namespace ML
 {
 
-void OWLQN::init()
+extern OptState opt_status;
+extern ReadThreadStatus read_status;
+extern GradThreadStatus grad_status;
+
+int OWLQN::init()
 {
     if (_N <= 0)
     {
-        LOG_ERROR("Dim[%d] must be large than 0!", _N);
+        LOG_ERROR("Dim[%lu] must be large than 0!", _N);
         return -1;
     }
     vector<double> tmp(_N, 0);
@@ -99,7 +103,7 @@ void OWLQN::scaleInto(vector<double>& out, const vector<double>& x, const double
     }
 }
 
-void l2grad(const vector<double>& w, vector<double>& grad)
+void OWLQN::l2grad(const vector<double>& w, vector<double>& grad)
 {
     if (_l2 > MinDoubleValue)
     {
@@ -187,7 +191,6 @@ void OWLQN::optimize()
         LOG_INFO("-------------Iter %d end!------------------", _cur_iter);
         _cur_iter ++;
     }
-    _model->set_param(_w);
 }
 
 void OWLQN::updateDir()
@@ -355,7 +358,6 @@ void OWLQN::linearSearch()
 	while (true) {
         LOG_INFO("Linear search step : %lf", alpha);
 		getNextPoint(alpha);
-        double sample_loss = 0.0;
         calc(CALC_NEXT_LOSS);
         value = l2Loss(_next_w, value);
 		value = l1Loss(_next_w, value);

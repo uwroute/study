@@ -14,6 +14,7 @@
 
 #include <string>
 #include "data.h"
+#include "state.h"
 #include "Common/thread.h"
 #include "Common/lock.h"
 #include "Common/msg_queue.h"
@@ -28,7 +29,7 @@ public:
 	ReadThread() {}
 	~ReadThread() {}
 	void add_queue(SampleQueue* p) {_queues.push_back(p);}
-	void load_data(std::string file);
+	int load_data(std::string file);
 	void consume_data();
 	virtual void run();
 private:

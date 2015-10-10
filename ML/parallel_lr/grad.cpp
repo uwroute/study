@@ -10,24 +10,26 @@
 #
 =============================================================================*/
 
-#include "logistic_model.h"
 #include <cmath>
 #include <fstream>
+#include <unistd.h>
 #include "Common/log.h"
+#include "owlqn.h"
+#include "grad.h"
 
 namespace ML {
 
 extern OptState opt_status;
 extern ReadThreadStatus read_status;
-extern GradThreadStatus grad_statue;
-extern ParamSet param;
+extern GradThreadStatus grad_status;
+ParamSet param;
 
 using std::ifstream;
 using std::ofstream;
 
 double GradCalcThread::get_w(int i)
 {
-    if (grad_status == CALC_GRAD || grad_status == CALC_LOSS || grad_status == CALC_GRAD_AND_LOSS)
+    if (grad_status.get_state() == CALC_GRAD || grad_status.get_state() == CALC_LOSS || grad_status.get_state() == CALC_GRAD_AND_LOSS)
     {
         return param.get_w(i);
     }
@@ -39,7 +41,7 @@ double GradCalcThread::wx(const Feature* sample)
     double wx = 0.0;
     while (sample->index != -1)
     {
-        wx += sample->value * get_w(sample->index, w);
+        wx += sample->value * get_w(sample->index);
         sample++;
     }
     return wx;
@@ -91,7 +93,7 @@ double GradCalcThread::log_loss(const Feature* sample, double label)
         return log(1.0 + exp(value));
     }
 }
-double GradCalcThread::log_loss(const wx, double label)
+double GradCalcThread::log_loss(const double wx, double label)
 {
     double value = -1.0*label*wx;
     if (value < -30.0)
@@ -110,8 +112,8 @@ double GradCalcThread::log_loss(const wx, double label)
 
 void GradCalcThread::calc_grad(const Feature* sample, double label)
 {
-        double h = predict(sample, w);
-        double y = data.labels[i];
+        double h = predict(sample);
+        double y = label;
         if (y < 0.5)
         {
             y = 0.0;
@@ -126,7 +128,6 @@ void GradCalcThread::calc_grad(const Feature* sample, double label)
             _batch_grads[sample->index] += g*sample->value;
             sample++;
         }
-    }
 }
 void GradCalcThread::calc_loss(const Feature* sample, double label)
 {
@@ -134,10 +135,10 @@ void GradCalcThread::calc_loss(const Feature* sample, double label)
 }
 void GradCalcThread::calc_grad_and_loss(const Feature* sample, double label)
 {
-	double wx = wx(sample);
-    _batch_loss += log_loss(wx, data.labels[i]);
-    double h = predict(wx);
-	double y = data.labels[i];
+	double wx_val = wx(sample);
+             _batch_loss += log_loss(wx_val, label);
+             double h = predict(wx_val);
+	double y = label;
 	if (y < 0.5)
 	{
 	    y = 0.0;
@@ -158,7 +159,7 @@ void GradCalcThread::update_batch_grad()
 {
 	param.update_batch_grad(_batch_grads);
 }
-void GradCalcThread::update_batch_grad()
+void GradCalcThread::update_batch_next_grad()
 {
     param.update_batch_next_grad(_batch_grads);
 }
@@ -177,7 +178,7 @@ void GradCalcThread::clear_state()
 }
 void GradCalcThread::process_batch()
 {
-    switch (grad_status)
+    switch (grad_status.get_state())
     {
         case CALC_IDLE:
             break;
@@ -215,17 +216,17 @@ void GradCalcThread::run()
 {
     while (opt_status != OPT_DONE) {
         // wait for start cond
-        // rcv sample and gard calc
-        while (!_queue->empty() && read_state != READ_DONE)
+        // rcv sample and gard calc        
+        while (!_queue->size() && read_status.get_state() != READ_END)
         {
-            if (_queue->empty())
+            if (_queue->size())
             {
                 usleep(1);
             }
             else
             {
                 Sample cur_sample = _queue->pop();
-                switch (grad_status)
+                switch (grad_status.get_state())
                 {
                     case CALC_IDLE:
                         break;

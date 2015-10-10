@@ -12,6 +12,8 @@
 
 #include "state.h"
 
+namespace ML {
+
 void GradThreadStatus::add_done_num()
 {
 	Lock lock(_mutex);
@@ -21,4 +23,6 @@ void GradThreadStatus::init_done_num()
 {
 	Lock lock(_mutex);
 	_done_num=0;
+}
+
 }

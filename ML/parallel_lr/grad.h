@@ -12,7 +12,9 @@
 #ifndef _GRAD_H_
 #define _GRAD_H_
 
+#include <unordered_map>
 #include "data.h"
+#include "state.h"
 #include "Common/thread.h"
 #include "Common/lock.h"
 #include "Common/msg_queue.h"
@@ -40,9 +42,11 @@ public:
 private:
     double wx(const Feature* sample);
     double log_loss(const Feature* sample, double label);
+    double log_loss(const double wx, double label);
     double predict(const Feature* sample);
     double predict(const double wx);
     double get_w(int i);
+    void process_batch();
 private:
     std::unordered_map<int, double> _batch_grads;
     double _batch_loss;
