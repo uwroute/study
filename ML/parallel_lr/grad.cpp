@@ -22,7 +22,7 @@ namespace ML {
 extern OptState opt_status;
 extern ReadThreadStatus read_status;
 extern GradThreadStatus grad_status;
-ParamSet param;
+extern ParamSet param;
 
 using std::ifstream;
 using std::ofstream;

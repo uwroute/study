@@ -10,6 +10,7 @@
 #
 =============================================================================*/
 
+#include "gflags/gflags.h"
 #include "state.h"
 #include "data.h"
 #include "read.h"
@@ -21,6 +22,7 @@ DEFINE_string(model_file, "ftrl.model", "model file");
 DEFINE_double(lamda1, 0.03, "L1");
 DEFINE_double(lamda2, 1.0, "L2");
 DEFINE_int32(max_iter, 1, "max iter");
+DEFINE_int32(calc_num, 1, "grad calc num");
 DEFINE_double(sample_rate, 1.0, "sample rate");
 DEFINE_int32(log_level, 2, "LogLevel :"
     "0 : TRACE "
@@ -30,8 +32,8 @@ DEFINE_int32(log_level, 2, "LogLevel :"
 
 namespace ML {
 
-OptState opt_state;
-ReadThreadStatus read_state;
+OptState opt_status;
+ReadThreadStatus read_status;
 GradThreadStatus grad_status;
 ParamSet param;
 int GRAD_THREAD_NUM = 0;
@@ -39,9 +41,12 @@ int GRAD_THREAD_NUM = 0;
 }
 
 using namespace ML;
+uint32_t log_level = 0;
 
-int main()
+int main(int argc, char** argv)
 {
+    	google::ParseCommandLineFlags(&argc, &argv, true);
+    	log_level = FLAGS_log_level;
 	// read thread
 	ReadThread reader;
 	reader.load_data(FLAGS_train_file);
@@ -59,6 +64,6 @@ int main()
 		calcers[i].join();
 	}
 	opt.join();
-	opt.save(FLAGS_model_file);
+	opt.save_model(FLAGS_model_file);
 	return 0;	
 }

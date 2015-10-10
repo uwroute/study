@@ -16,7 +16,6 @@
 #include <unistd.h>
 
 #define MinDoubleValue 1.0e-10
-extern int GRAD_THREAD_NUM;
 
 namespace ML
 {
@@ -24,6 +23,7 @@ namespace ML
 extern OptState opt_status;
 extern ReadThreadStatus read_status;
 extern GradThreadStatus grad_status;
+extern int GRAD_THREAD_NUM;
 
 int OWLQN::init()
 {
